@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>霧都漫步手帳 2026</title>
+  <title>旅遊手帳</title>
   
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -117,12 +117,11 @@
 <body class="washi-pattern min-h-screen w-full antialiased overflow-x-hidden">
 <div id="app" class="w-full min-h-screen bg-cq-wash relative pb-28 flex flex-col">
 
-  <!-- 1. 主導航頂欄 (Header) - 採用雙層垂直分工排版，主題完整佔滿首行，下方為氣溫、匯率與分享功能列 -->
+  <!-- 1. 主導航頂欄 (Header) -->
   <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-cq-border px-4 pt-3 pb-2.5 safe-top w-full shadow-sm space-y-2">
-    <!-- 上層：旅遊主題、日程標記與離線標籤 (完全無按鈕擠壓，字體完整舒展) -->
+    <!-- 上層：旅遊主題、日程標記與離線標籤 -->
     <div class="flex items-center justify-between w-full">
       <div class="flex items-center space-x-2.5 min-w-0 flex-1">
-        <!-- 點擊直接開啟修改旅遊主題與日程彈窗 -->
         <button 
           type="button"
           @click="openEditTripTitleModal" 
@@ -134,7 +133,7 @@
 
         <div @click="openEditTripTitleModal" class="cursor-pointer group min-w-0 flex-1 select-none">
           <h1 class="font-serif-cq font-bold text-base text-cq-charcoal flex items-center tracking-wide group-hover:text-cq-cinnabar transition truncate">
-            <span class="truncate">{{ tripMeta.title || '自訂旅遊主題' }}</span>
+            <span class="truncate">{{ tripMeta.title || '旅遊手帳' }}</span>
             <span class="text-cq-cinnabar ml-1 text-xs flex-shrink-0">●</span>
             <i class="fa-regular fa-pen-to-square text-[10px] text-cq-muted ml-1.5 opacity-60 group-hover:opacity-100 transition flex-shrink-0"></i>
           </h1>
@@ -151,11 +150,12 @@
       </span>
     </div>
 
-    <!-- 下層：移至下方的專屬功能列（氣溫、即時匯率與行程分享按鈕） -->
+    <!-- 下層：氣溫、即時匯率與行程分享按鈕 -->
     <div class="flex items-center justify-between pt-1 border-t border-cq-border/40 w-full">
       <div class="flex items-center space-x-1.5 flex-1 min-w-0">
-        <!-- 天氣鈕：點擊開啟城市與氣候切換設定 -->
+        <!-- 天氣鈕 -->
         <button 
+          type="button"
           @click="openCityWeatherModal" 
           class="bg-cq-mossLight text-cq-moss px-2.5 py-1 rounded-full text-xs font-mono flex items-center space-x-1 border border-cq-moss/20 active:scale-95 transition"
           title="點擊切換城市與即時天氣"
@@ -164,8 +164,9 @@
           <span>{{ currentCity.name }} {{ weather.temp }}°C</span>
         </button>
 
-        <!-- 匯率鈕：點擊開啟貨幣與即時匯率設定 -->
+        <!-- 匯率鈕 -->
         <button 
+          type="button"
           @click="openCurrencyModal" 
           class="bg-cq-goldLight text-cq-gold px-2.5 py-1 rounded-full text-xs font-mono flex items-center space-x-1 border border-cq-gold/20 active:scale-95 transition"
           title="點擊切換幣別與更新匯率"
@@ -177,6 +178,7 @@
 
       <!-- 一鍵產生專屬行程連結 -->
       <button 
+        type="button"
         @click="generateShareUrl" 
         class="bg-cq-cinnabar text-white px-3 py-1 rounded-full text-xs font-serif-cq flex items-center space-x-1 shadow-sm hover:bg-black transition active:scale-95 flex-shrink-0"
         title="將目前排好的行程與預算產生分享連結傳給朋友"
@@ -202,6 +204,7 @@
           class="flex space-x-2.5 overflow-x-auto no-scrollbar py-1 drag-scroll-container px-0.5 touch-pan-x flex-1"
         >
           <button 
+            type="button"
             v-for="(day, index) in daysList" 
             :key="day.dayCode + index"
             :ref="el => { if (el) dayTabRefs[index] = el }"
@@ -221,6 +224,7 @@
 
         <!-- 手動新增天數快捷按鈕 -->
         <button 
+          type="button"
           @click="openAddDayModal" 
           class="flex-shrink-0 w-12 h-14 bg-white hover:bg-cq-wash border border-dashed border-cq-charcoal/40 text-cq-charcoal rounded-2xl flex flex-col items-center justify-center space-y-0.5 shadow-sm active:scale-95 transition"
           title="新增日程天數"
@@ -230,7 +234,7 @@
         </button>
       </div>
 
-      <!-- 當日主題卡片 (含編輯/刪除天數) -->
+      <!-- 當日主題卡片 -->
       <div v-if="currentDay" class="bg-white rounded-2xl p-4 border border-cq-border shadow-sm flex items-center justify-between">
         <div class="space-y-0.5 flex-1 min-w-0 pr-2">
           <div class="flex items-center space-x-2">
@@ -239,11 +243,11 @@
             </span>
             <span class="text-xs text-cq-muted font-mono">{{ currentDay.fullDate }}</span>
             <!-- 編輯此日 -->
-            <button @click="openEditDayModal(currentDay)" class="text-cq-muted hover:text-cq-charcoal p-1 text-xs" title="編輯此日主題">
+            <button type="button" @click="openEditDayModal(currentDay)" class="text-cq-muted hover:text-cq-charcoal p-1 text-xs" title="編輯此日主題">
               <i class="fa-regular fa-pen-to-square"></i>
             </button>
             <!-- 刪除此日 -->
-            <button v-if="daysList.length > 1" @click="confirmDeleteDay(selectedDayIndex)" class="text-cq-muted hover:text-cq-cinnabar p-1 text-xs" title="刪除整天">
+            <button type="button" v-if="daysList.length > 1" @click="confirmDeleteDay(selectedDayIndex)" class="text-cq-muted hover:text-cq-cinnabar p-1 text-xs" title="刪除整天">
               <i class="fa-regular fa-trash-can"></i>
             </button>
           </div>
@@ -262,12 +266,12 @@
 
       <div v-else class="bg-white rounded-2xl p-6 border border-cq-border text-center space-y-2">
         <p class="text-xs text-cq-muted">目前尚未設定任何日程天數。</p>
-        <button @click="openAddDayModal" class="px-4 py-2 bg-cq-charcoal text-white rounded-xl text-xs font-serif-cq">
+        <button type="button" @click="openAddDayModal" class="px-4 py-2 bg-cq-charcoal text-white rounded-xl text-xs font-serif-cq">
           新增第 1 天
         </button>
       </div>
 
-      <!-- 時間軸行程列表 (支援照片與醒目提醒卡) -->
+      <!-- 時間軸行程列表 -->
       <div v-if="currentDay && currentDay.events && currentDay.events.length > 0" class="space-y-3 relative before:absolute before:left-3.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-cq-border">
         <div 
           v-for="(item, idx) in currentDay.events" 
@@ -296,43 +300,21 @@
               
               <!-- 編輯/刪除 -->
               <div class="flex items-center space-x-1 text-cq-muted">
-                <button @click="openEditEventModal(item)" class="p-1 hover:text-cq-charcoal" title="編輯">
+                <button type="button" @click="openEditEventModal(item)" class="p-1 hover:text-cq-charcoal" title="編輯">
                   <i class="fa-regular fa-pen-to-square text-xs"></i>
                 </button>
-                <button @click="deleteEvent(item.id)" class="p-1 hover:text-cq-cinnabar" title="刪除">
+                <button type="button" @click="deleteEvent(item.id)" class="p-1 hover:text-cq-cinnabar" title="刪除">
                   <i class="fa-regular fa-trash-can text-xs"></i>
                 </button>
               </div>
             </div>
 
-            <!-- 行程專屬自選照片 -->
-            <div v-if="item.image" class="mt-2.5 rounded-xl overflow-hidden border border-cq-border/80 max-h-48">
+            <!-- 照片展示 -->
+            <div v-if="item.image" class="mt-2.5 rounded-xl overflow-hidden border border-cq-border max-h-48 w-full">
               <img :src="item.image" :alt="item.name" class="w-full h-full object-cover">
             </div>
 
-            <!-- 醒目提醒事項卡片 -->
-            <div 
-              v-if="item.alertText" 
-              class="mt-2.5 p-3 rounded-xl border shadow-sm space-y-1"
-              :class="item.alertType === 'danger' 
-                ? 'bg-rose-50 border-rose-300 text-rose-900' 
-                : (item.alertType === 'info' ? 'bg-sky-50 border-sky-300 text-sky-900' : 'bg-amber-50 border-amber-400 text-amber-900')"
-            >
-              <div class="flex items-center space-x-1.5 font-bold text-xs">
-                <i 
-                  class="fa-solid" 
-                  :class="item.alertType === 'danger' 
-                    ? 'fa-circle-exclamation text-rose-600' 
-                    : (item.alertType === 'info' ? 'fa-circle-info text-sky-600' : 'fa-triangle-exclamation text-amber-600')"
-                ></i>
-                <span>{{ item.alertTitle || '特別提醒事項' }}</span>
-              </div>
-              <p class="text-[11px] leading-relaxed opacity-95">
-                {{ item.alertText }}
-              </p>
-            </div>
-
-            <!-- 景點地址與一鍵複製按鈕 -->
+            <!-- 地址與複製 -->
             <div v-if="item.address" class="mt-2 text-xs bg-cq-wash/80 p-2 rounded-xl border border-cq-border/70 flex items-center justify-between gap-2">
               <div class="flex items-start space-x-1.5 text-cq-charcoal/80 flex-1 leading-snug">
                 <i class="fa-solid fa-location-dot text-cq-cinnabar text-xs mt-0.5 flex-shrink-0"></i>
@@ -349,139 +331,164 @@
               </button>
             </div>
 
-            <!-- 停留時間與開放建議 -->
-            <div v-if="item.duration || item.hours" class="mt-2 text-[11px] text-cq-moss bg-cq-mossLight/50 p-2 rounded-xl flex flex-wrap gap-x-3 gap-y-1">
-              <span v-if="item.duration"><i class="fa-regular fa-clock mr-1"></i>建議停留：{{ item.duration }}</span>
-              <span v-if="item.hours"><i class="fa-solid fa-door-open mr-1"></i>開放時間：{{ item.hours }}</span>
+            <!-- 建議停留時間 -->
+            <div v-if="item.duration" class="mt-2 text-[11px] text-cq-moss bg-cq-mossLight/50 px-2.5 py-1 rounded-xl inline-flex items-center space-x-1">
+              <i class="fa-regular fa-clock text-[10px]"></i>
+              <span>建議停留：{{ item.duration }}</span>
             </div>
 
-            <!-- 備註說明 -->
+            <!-- 醒目提醒事項卡 -->
+            <div 
+              v-if="item.alertTitle || item.alertText" 
+              class="mt-2.5 p-3 rounded-xl border shadow-sm space-y-1"
+              :class="{
+                'bg-amber-50 border-amber-300 text-amber-900': item.alertType === 'warning',
+                'bg-rose-50 border-rose-300 text-rose-900': item.alertType === 'danger',
+                'bg-sky-50 border-sky-300 text-sky-900': item.alertType === 'info'
+              }"
+            >
+              <div class="flex items-center space-x-1.5 font-bold text-xs">
+                <i class="fa-solid fa-bell text-xs"></i>
+                <span>{{ item.alertTitle || '提醒事項' }}</span>
+              </div>
+              <p v-if="item.alertText" class="text-[11px] leading-relaxed opacity-90">
+                {{ item.alertText }}
+              </p>
+            </div>
+
+            <!-- 備註 -->
             <p v-if="item.notes" class="text-xs text-cq-charcoal/80 mt-2 bg-cq-wash/70 p-2.5 rounded-xl border border-cq-border/60 leading-relaxed font-sans">
               {{ item.notes }}
             </p>
 
-            <!-- 預估花費 -->
-            <div v-if="item.costCny" class="mt-2 flex items-center justify-between text-[11px] text-cq-muted font-mono pt-1 border-t border-cq-border/40">
-              <span>預算門票/支出</span>
-              <span class="font-semibold text-cq-cinnabar font-mono">{{ currentCurrency.symbol }}{{ item.costCny }} (≈ NT${{ (item.costCny * exchangeRate).toFixed(0) }})</span>
+            <!-- 預算/花費 -->
+            <div v-if="item.costCny" class="mt-2 flex items-center justify-between text-[11px] text-cq-muted font-mono pt-1.5 border-t border-cq-border/40">
+              <span>預算花費</span>
+              <span class="font-semibold text-cq-cinnabar font-mono">
+                {{ currentCurrency.symbol }}{{ item.costCny }} (≈ NT${{ Math.round(item.costCny * exchangeRate) }})
+              </span>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- 空白行程狀態引導 -->
-      <div v-else-if="currentDay" class="p-8 bg-white rounded-2xl border border-dashed border-cq-border text-center text-xs text-cq-muted space-y-3">
-        <i class="fa-regular fa-calendar-plus text-3xl text-cq-charcoal/30 block"></i>
-        <p class="font-medium text-cq-charcoal">{{ currentDay.dayCode }} 目前尚無行程站點</p>
-        <p class="text-[11px]">行程已為您清空，點擊下方按鈕即可自由新增景點、上傳相簿美照與醒目備忘！</p>
+      <!-- 空行程提示 -->
+      <div v-else-if="currentDay" class="bg-white rounded-2xl p-6 border border-dashed border-cq-border text-center space-y-2">
+        <div class="w-10 h-10 rounded-full bg-cq-wash border border-cq-border flex items-center justify-center mx-auto text-cq-muted">
+          <i class="fa-regular fa-calendar-plus text-base"></i>
+        </div>
+        <div class="text-xs text-cq-muted">
+          {{ currentDay.dayCode }} 目前尚無行程站點，點擊下方按鈕開始新增！
+        </div>
       </div>
 
       <!-- 新增站點按鈕 -->
       <button 
+        type="button"
         v-if="currentDay"
         @click="openAddEventModal" 
-        class="w-full py-3.5 border-2 border-dashed border-cq-border rounded-2xl text-cq-muted hover:text-cq-charcoal hover:border-cq-charcoal transition text-xs font-serif-cq flex items-center justify-center space-x-2 bg-white/50 active:scale-[0.99]"
+        class="w-full py-3 border-2 border-dashed border-cq-border rounded-2xl text-cq-muted hover:text-cq-charcoal hover:border-cq-charcoal transition text-xs font-serif-cq flex items-center justify-center space-x-2 active:scale-98"
       >
         <i class="fa-solid fa-plus text-[10px]"></i>
         <span>新增 {{ currentDay.dayCode }} 行程站點</span>
       </button>
     </section>
 
-    <!-- TAB 2: 全手動行程預算明細 (Budget Detail) -->
+    <!-- TAB 2: 預算總覽 (Budget) -->
     <section v-show="activeTab === 'budget'" class="space-y-4">
-      <!-- 總預算概覽卡片 -->
+      <!-- 預算總卡片 -->
       <div class="bg-white rounded-2xl p-4 border border-cq-border shadow-sm space-y-3">
         <div class="flex justify-between items-start">
           <div>
-            <span class="text-[10px] text-cq-muted uppercase tracking-wider block font-mono">Trip Budget Summary</span>
-            <h2 class="text-base font-serif-cq font-bold text-cq-charcoal">行程預算規劃總覽</h2>
+            <span class="text-[10px] text-cq-muted uppercase tracking-wider block font-mono">Budget Overview</span>
+            <h2 class="text-base font-serif-cq font-bold text-cq-charcoal">行程預算總覽</h2>
           </div>
           <div class="text-right">
-            <span class="text-lg font-black font-mono text-cq-charcoal">NT${{ totalBudgetTwd.toLocaleString() }}</span>
-            <span class="block text-[11px] font-mono text-cq-muted">≈ {{ currentCurrency.symbol }}{{ totalBudgetDestCurrency.toFixed(1) }} {{ currentCurrency.code }}</span>
+            <span class="text-xl font-black font-mono text-cq-charcoal">NT${{ totalBudgetTwd.toLocaleString() }}</span>
+            <span class="block text-[11px] font-mono text-cq-muted">
+              ≈ {{ currentCurrency.symbol }}{{ totalBudgetDestCurrency.toFixed(1) }} {{ currentCurrency.code }}
+            </span>
           </div>
         </div>
 
-        <!-- 四大分類統計小計 -->
-        <div class="p-3 bg-cq-wash rounded-xl border border-cq-border text-xs text-cq-muted space-y-1.5 font-sans">
-          <div class="flex justify-between items-center">
-            <span class="flex items-center space-x-1.5"><span class="w-2 h-2 rounded-full bg-slate-600"></span><span>固定大項開銷:</span></span>
-            <strong class="font-mono text-cq-charcoal">{{ currentCurrency.symbol }}{{ getCategoryTotalDest(CATEGORY_KEYS.FIXED).toFixed(1) }} (≈ NT${{ Math.round(getCategoryTotalTwd(CATEGORY_KEYS.FIXED)).toLocaleString() }})</strong>
+        <div class="p-3 bg-cq-wash rounded-xl border border-cq-border text-xs space-y-1.5 font-mono">
+          <div class="flex justify-between items-center text-cq-charcoal">
+            <span>固定大項小計:</span>
+            <strong>NT${{ Math.round(getCategoryTotalTwd(CATEGORY_KEYS.FIXED)).toLocaleString() }}</strong>
           </div>
-          <div class="flex justify-between items-center">
-            <span class="flex items-center space-x-1.5"><span class="w-2 h-2 rounded-full bg-cq-cinnabar"></span><span>行程門票與體驗項目:</span></span>
-            <strong class="font-mono text-cq-charcoal">{{ currentCurrency.symbol }}{{ getCategoryTotalDest(CATEGORY_KEYS.TICKET).toFixed(1) }} (≈ NT${{ Math.round(getCategoryTotalTwd(CATEGORY_KEYS.TICKET)).toLocaleString() }})</strong>
+          <div class="flex justify-between items-center text-cq-cinnabar">
+            <span>行程門票小計:</span>
+            <strong>NT${{ Math.round(getCategoryTotalTwd(CATEGORY_KEYS.TICKET)).toLocaleString() }}</strong>
           </div>
-          <div class="flex justify-between items-center">
-            <span class="flex items-center space-x-1.5"><span class="w-2 h-2 rounded-full bg-cq-gold"></span><span>餐食預估費用:</span></span>
-            <strong class="font-mono text-cq-charcoal">{{ currentCurrency.symbol }}{{ getCategoryTotalDest(CATEGORY_KEYS.FOOD).toFixed(1) }} (≈ NT${{ Math.round(getCategoryTotalTwd(CATEGORY_KEYS.FOOD)).toLocaleString() }})</strong>
+          <div class="flex justify-between items-center text-cq-gold">
+            <span>餐食費用小計:</span>
+            <strong>NT${{ Math.round(getCategoryTotalTwd(CATEGORY_KEYS.FOOD)).toLocaleString() }}</strong>
           </div>
-          <div class="flex justify-between items-center">
-            <span class="flex items-center space-x-1.5"><span class="w-2 h-2 rounded-full bg-rose-500"></span><span>個人限定項目:</span></span>
-            <strong class="font-mono text-cq-charcoal">{{ currentCurrency.symbol }}{{ getCategoryTotalDest(CATEGORY_KEYS.PERSONAL).toFixed(1) }} (≈ NT${{ Math.round(getCategoryTotalTwd(CATEGORY_KEYS.PERSONAL)).toLocaleString() }})</strong>
+          <div class="flex justify-between items-center text-cq-moss">
+            <span>個人限定小計:</span>
+            <strong>NT${{ Math.round(getCategoryTotalTwd(CATEGORY_KEYS.PERSONAL)).toLocaleString() }}</strong>
           </div>
         </div>
 
-        <!-- 獨立新增預算按鈕 -->
+        <!-- 新增預算項目按鈕 -->
         <button 
+          type="button"
           @click="openAddBudgetModal" 
-          class="w-full py-3 bg-cq-charcoal hover:bg-black text-white rounded-xl text-xs font-serif-cq font-bold shadow-sm transition flex items-center justify-center space-x-2 active:scale-98"
+          class="w-full py-2.5 bg-cq-charcoal hover:bg-black text-white rounded-xl text-xs font-serif-cq font-medium transition flex items-center justify-center space-x-1.5 shadow-sm active:scale-98"
         >
-          <i class="fa-solid fa-plus text-[11px]"></i>
+          <i class="fa-solid fa-plus text-[10px]"></i>
           <span>新增預算項目</span>
         </button>
       </div>
 
-      <!-- 類別 1: 固定大項開銷 (預設新增機票、住宿、旅平險+不便險、網路漫遊) -->
+      <!-- 分類 1: 固定大項開銷 -->
       <div class="bg-white rounded-2xl p-4 border border-cq-border shadow-sm space-y-2.5">
-        <div class="flex justify-between items-center pb-2 border-b border-cq-border/60">
+        <div class="flex items-center justify-between pb-2 border-b border-cq-border/60">
           <div class="flex items-center space-x-2">
-            <i class="fa-solid fa-plane text-xs text-slate-700"></i>
+            <i class="fa-solid fa-plane text-xs text-cq-moss"></i>
             <h3 class="font-serif-cq font-bold text-sm text-cq-charcoal">固定大項開銷</h3>
           </div>
-          <span class="text-xs font-mono font-bold text-slate-700">
+          <span class="text-xs font-mono font-bold text-cq-moss">
             小計: NT${{ Math.round(getCategoryTotalTwd(CATEGORY_KEYS.FIXED)).toLocaleString() }}
           </span>
         </div>
 
         <div v-if="getItemsByCategory(CATEGORY_KEYS.FIXED).length > 0" class="space-y-2">
           <div 
-            v-for="item in getItemsByCategory(CATEGORY_KEYS.FIXED)" 
-            :key="item.id" 
-            class="flex justify-between items-center p-2.5 bg-cq-wash/60 rounded-xl border border-cq-border/80 text-xs"
+            v-for="b in getItemsByCategory(CATEGORY_KEYS.FIXED)" 
+            :key="b.id"
+            class="p-2.5 bg-cq-wash/60 rounded-xl border border-cq-border flex items-center justify-between text-xs font-mono"
           >
-            <div class="space-y-0.5 flex-1 min-w-0 pr-2">
-              <span class="font-medium text-cq-charcoal block truncate">{{ item.title }}</span>
-              <p v-if="item.notes" class="text-[11px] text-cq-muted truncate">{{ item.notes }}</p>
+            <div>
+              <span class="font-sans font-bold text-cq-charcoal block">{{ b.title }}</span>
+              <span v-if="b.notes" class="text-[10px] text-cq-muted block mt-0.5">{{ b.notes }}</span>
             </div>
-            <div class="text-right flex items-center space-x-2 flex-shrink-0">
-              <div class="font-mono">
-                <span class="font-bold text-cq-charcoal block">
-                  {{ item.currency === 'TWD' ? 'NT$' + item.amount.toLocaleString() : currentCurrency.symbol + item.amount.toLocaleString() }}
-                </span>
-                <span class="text-[10px] text-cq-muted block">
-                  {{ item.currency === 'TWD' ? '≈ ' + currentCurrency.symbol + (item.amount / exchangeRate).toFixed(1) : '≈ NT$' + Math.round(item.amount * exchangeRate).toLocaleString() }}
+            <div class="text-right flex items-center space-x-2">
+              <div>
+                <strong class="text-cq-charcoal block">
+                  {{ b.currency === 'TWD' ? 'NT$' + b.amount.toLocaleString() : currentCurrency.symbol + b.amount }}
+                </strong>
+                <span v-if="b.currency !== 'TWD'" class="text-[10px] text-cq-muted block">
+                  ≈ NT${{ Math.round(b.amount * exchangeRate).toLocaleString() }}
                 </span>
               </div>
-              <div class="flex items-center space-x-1 text-cq-muted pl-1 border-l border-cq-border/60">
-                <button @click="openEditBudgetModal(item)" class="hover:text-cq-charcoal p-1" title="編輯">
-                  <i class="fa-regular fa-pen-to-square text-xs"></i>
-                </button>
-                <button @click="deleteBudgetItem(item.id)" class="hover:text-cq-cinnabar p-1" title="刪除">
-                  <i class="fa-regular fa-trash-can text-xs"></i>
-                </button>
-              </div>
+              <button type="button" @click="openEditBudgetModal(b)" class="text-cq-muted hover:text-cq-charcoal p-1" title="編輯">
+                <i class="fa-regular fa-pen-to-square text-xs"></i>
+              </button>
+              <button type="button" @click="deleteBudgetItem(b.id)" class="text-cq-muted hover:text-cq-cinnabar p-1" title="刪除">
+                <i class="fa-regular fa-trash-can text-xs"></i>
+              </button>
             </div>
           </div>
         </div>
-        <div v-else class="text-xs text-cq-muted bg-cq-wash/40 p-3 rounded-xl border border-dashed border-cq-border text-center">
-          尚無固定大項項目，點擊「新增預算項目」填寫。
+        <div v-else class="text-xs text-cq-muted p-3 bg-cq-wash/40 rounded-xl text-center border border-dashed border-cq-border">
+          目前尚無固定開銷項目。
         </div>
       </div>
 
-      <!-- 類別 2: 行程門票與體驗項目 (預設空白) -->
+      <!-- 分類 2: 行程門票與體驗項目 -->
       <div class="bg-white rounded-2xl p-4 border border-cq-border shadow-sm space-y-2.5">
-        <div class="flex justify-between items-center pb-2 border-b border-cq-border/60">
+        <div class="flex items-center justify-between pb-2 border-b border-cq-border/60">
           <div class="flex items-center space-x-2">
             <i class="fa-solid fa-ticket text-xs text-cq-cinnabar"></i>
             <h3 class="font-serif-cq font-bold text-sm text-cq-charcoal">行程門票與體驗項目</h3>
@@ -493,43 +500,40 @@
 
         <div v-if="getItemsByCategory(CATEGORY_KEYS.TICKET).length > 0" class="space-y-2">
           <div 
-            v-for="item in getItemsByCategory(CATEGORY_KEYS.TICKET)" 
-            :key="item.id" 
-            class="flex justify-between items-center p-2.5 bg-cq-wash/60 rounded-xl border border-cq-border/80 text-xs"
+            v-for="b in getItemsByCategory(CATEGORY_KEYS.TICKET)" 
+            :key="b.id"
+            class="p-2.5 bg-cq-wash/60 rounded-xl border border-cq-border flex items-center justify-between text-xs font-mono"
           >
-            <div class="space-y-0.5 flex-1 min-w-0 pr-2">
-              <span class="font-medium text-cq-charcoal block truncate">{{ item.title }}</span>
-              <p v-if="item.notes" class="text-[11px] text-cq-muted truncate">{{ item.notes }}</p>
+            <div>
+              <span class="font-sans font-bold text-cq-charcoal block">{{ b.title }}</span>
+              <span v-if="b.notes" class="text-[10px] text-cq-muted block mt-0.5">{{ b.notes }}</span>
             </div>
-            <div class="text-right flex items-center space-x-2 flex-shrink-0">
-              <div class="font-mono">
-                <span class="font-bold text-cq-charcoal block">
-                  {{ item.currency === 'TWD' ? 'NT$' + item.amount.toLocaleString() : currentCurrency.symbol + item.amount.toLocaleString() }}
-                </span>
-                <span class="text-[10px] text-cq-muted block">
-                  {{ item.currency === 'TWD' ? '≈ ' + currentCurrency.symbol + (item.amount / exchangeRate).toFixed(1) : '≈ NT$' + Math.round(item.amount * exchangeRate).toLocaleString() }}
+            <div class="text-right flex items-center space-x-2">
+              <div>
+                <strong class="text-cq-charcoal block">
+                  {{ b.currency === 'TWD' ? 'NT$' + b.amount.toLocaleString() : currentCurrency.symbol + b.amount }}
+                </strong>
+                <span v-if="b.currency !== 'TWD'" class="text-[10px] text-cq-muted block">
+                  ≈ NT${{ Math.round(b.amount * exchangeRate).toLocaleString() }}
                 </span>
               </div>
-              <div class="flex items-center space-x-1 text-cq-muted pl-1 border-l border-cq-border/60">
-                <button @click="openEditBudgetModal(item)" class="hover:text-cq-charcoal p-1" title="編輯">
-                  <i class="fa-regular fa-pen-to-square text-xs"></i>
-                </button>
-                <button @click="deleteBudgetItem(item.id)" class="hover:text-cq-cinnabar p-1" title="刪除">
-                  <i class="fa-regular fa-trash-can text-xs"></i>
-                </button>
-              </div>
+              <button type="button" @click="openEditBudgetModal(b)" class="text-cq-muted hover:text-cq-charcoal p-1" title="編輯">
+                <i class="fa-regular fa-pen-to-square text-xs"></i>
+              </button>
+              <button type="button" @click="deleteBudgetItem(b.id)" class="text-cq-muted hover:text-cq-cinnabar p-1" title="刪除">
+                <i class="fa-regular fa-trash-can text-xs"></i>
+              </button>
             </div>
           </div>
         </div>
-        <div v-else class="text-xs text-cq-muted bg-cq-wash/40 p-4 rounded-xl border border-dashed border-cq-border text-center space-y-1">
-          <p class="font-medium text-cq-charcoal">目前尚無門票或包車活動項目</p>
-          <p class="text-[11px]">點擊上方「新增預算項目」選擇「行程門票與體驗項目」即可自由新增景點門票、包車費用等。</p>
+        <div v-else class="text-xs text-cq-muted p-3 bg-cq-wash/40 rounded-xl text-center border border-dashed border-cq-border">
+          目前尚無門票或體驗項目，點擊上方按鈕新增。
         </div>
       </div>
 
-      <!-- 類別 3: 餐食預估費用 (預設空白) -->
+      <!-- 分類 3: 餐食預估費用 -->
       <div class="bg-white rounded-2xl p-4 border border-cq-border shadow-sm space-y-2.5">
-        <div class="flex justify-between items-center pb-2 border-b border-cq-border/60">
+        <div class="flex items-center justify-between pb-2 border-b border-cq-border/60">
           <div class="flex items-center space-x-2">
             <i class="fa-solid fa-utensils text-xs text-cq-gold"></i>
             <h3 class="font-serif-cq font-bold text-sm text-cq-charcoal">餐食預估費用</h3>
@@ -541,161 +545,166 @@
 
         <div v-if="getItemsByCategory(CATEGORY_KEYS.FOOD).length > 0" class="space-y-2">
           <div 
-            v-for="item in getItemsByCategory(CATEGORY_KEYS.FOOD)" 
-            :key="item.id" 
-            class="flex justify-between items-center p-2.5 bg-cq-wash/60 rounded-xl border border-cq-border/80 text-xs"
+            v-for="b in getItemsByCategory(CATEGORY_KEYS.FOOD)" 
+            :key="b.id"
+            class="p-2.5 bg-cq-wash/60 rounded-xl border border-cq-border flex items-center justify-between text-xs font-mono"
           >
-            <div class="space-y-0.5 flex-1 min-w-0 pr-2">
-              <span class="font-medium text-cq-charcoal block truncate">{{ item.title }}</span>
-              <p v-if="item.notes" class="text-[11px] text-cq-muted truncate">{{ item.notes }}</p>
+            <div>
+              <span class="font-sans font-bold text-cq-charcoal block">{{ b.title }}</span>
+              <span v-if="b.notes" class="text-[10px] text-cq-muted block mt-0.5">{{ b.notes }}</span>
             </div>
-            <div class="text-right flex items-center space-x-2 flex-shrink-0">
-              <div class="font-mono">
-                <span class="font-bold text-cq-charcoal block">
-                  {{ item.currency === 'TWD' ? 'NT$' + item.amount.toLocaleString() : currentCurrency.symbol + item.amount.toLocaleString() }}
-                </span>
-                <span class="text-[10px] text-cq-muted block">
-                  {{ item.currency === 'TWD' ? '≈ ' + currentCurrency.symbol + (item.amount / exchangeRate).toFixed(1) : '≈ NT$' + Math.round(item.amount * exchangeRate).toLocaleString() }}
+            <div class="text-right flex items-center space-x-2">
+              <div>
+                <strong class="text-cq-charcoal block">
+                  {{ b.currency === 'TWD' ? 'NT$' + b.amount.toLocaleString() : currentCurrency.symbol + b.amount }}
+                </strong>
+                <span v-if="b.currency !== 'TWD'" class="text-[10px] text-cq-muted block">
+                  ≈ NT${{ Math.round(b.amount * exchangeRate).toLocaleString() }}
                 </span>
               </div>
-              <div class="flex items-center space-x-1 text-cq-muted pl-1 border-l border-cq-border/60">
-                <button @click="openEditBudgetModal(item)" class="hover:text-cq-charcoal p-1" title="編輯">
-                  <i class="fa-regular fa-pen-to-square text-xs"></i>
-                </button>
-                <button @click="deleteBudgetItem(item.id)" class="hover:text-cq-cinnabar p-1" title="刪除">
-                  <i class="fa-regular fa-trash-can text-xs"></i>
-                </button>
-              </div>
+              <button type="button" @click="openEditBudgetModal(b)" class="text-cq-muted hover:text-cq-charcoal p-1" title="編輯">
+                <i class="fa-regular fa-pen-to-square text-xs"></i>
+              </button>
+              <button type="button" @click="deleteBudgetItem(b.id)" class="text-cq-muted hover:text-cq-cinnabar p-1" title="刪除">
+                <i class="fa-regular fa-trash-can text-xs"></i>
+              </button>
             </div>
           </div>
         </div>
-        <div v-else class="text-xs text-cq-muted bg-cq-wash/40 p-4 rounded-xl border border-dashed border-cq-border text-center space-y-1">
-          <p class="font-medium text-cq-charcoal">目前尚無餐食預估項目</p>
-          <p class="text-[11px]">點擊上方「新增預算項目」選擇「餐食預估費用」即可填寫火鍋大餐、小吃或午晚餐預算。</p>
+        <div v-else class="text-xs text-cq-muted p-3 bg-cq-wash/40 rounded-xl text-center border border-dashed border-cq-border">
+          目前尚無餐食預算項目，點擊上方按鈕新增。
         </div>
       </div>
 
-      <!-- 類別 4: 個人限定項目 (預設空白) -->
+      <!-- 分類 4: 個人限定項目 -->
       <div class="bg-white rounded-2xl p-4 border border-cq-border shadow-sm space-y-2.5">
-        <div class="flex justify-between items-center pb-2 border-b border-cq-border/60">
+        <div class="flex items-center justify-between pb-2 border-b border-cq-border/60">
           <div class="flex items-center space-x-2">
-            <i class="fa-solid fa-wand-magic-sparkles text-xs text-rose-500"></i>
+            <i class="fa-solid fa-wand-magic-sparkles text-xs text-cq-cinnabar"></i>
             <h3 class="font-serif-cq font-bold text-sm text-cq-charcoal">個人限定項目</h3>
           </div>
-          <span class="text-xs font-mono font-bold text-rose-500">
+          <span class="text-xs font-mono font-bold text-cq-moss">
             小計: NT${{ Math.round(getCategoryTotalTwd(CATEGORY_KEYS.PERSONAL)).toLocaleString() }}
           </span>
         </div>
 
         <div v-if="getItemsByCategory(CATEGORY_KEYS.PERSONAL).length > 0" class="space-y-2">
           <div 
-            v-for="item in getItemsByCategory(CATEGORY_KEYS.PERSONAL)" 
-            :key="item.id" 
-            class="flex justify-between items-center p-2.5 bg-cq-wash/60 rounded-xl border border-cq-border/80 text-xs"
+            v-for="b in getItemsByCategory(CATEGORY_KEYS.PERSONAL)" 
+            :key="b.id"
+            class="p-2.5 bg-cq-wash/60 rounded-xl border border-cq-border flex items-center justify-between text-xs font-mono"
           >
-            <div class="space-y-0.5 flex-1 min-w-0 pr-2">
-              <span class="font-medium text-cq-charcoal block truncate">{{ item.title }}</span>
-              <p v-if="item.notes" class="text-[11px] text-cq-muted truncate">{{ item.notes }}</p>
+            <div>
+              <span class="font-sans font-bold text-cq-charcoal block">{{ b.title }}</span>
+              <span v-if="b.notes" class="text-[10px] text-cq-muted block mt-0.5">{{ b.notes }}</span>
             </div>
-            <div class="text-right flex items-center space-x-2 flex-shrink-0">
-              <div class="font-mono">
-                <span class="font-bold text-cq-charcoal block">
-                  {{ item.currency === 'TWD' ? 'NT$' + item.amount.toLocaleString() : currentCurrency.symbol + item.amount.toLocaleString() }}
-                </span>
-                <span class="text-[10px] text-cq-muted block">
-                  {{ item.currency === 'TWD' ? '≈ ' + currentCurrency.symbol + (item.amount / exchangeRate).toFixed(1) : '≈ NT$' + Math.round(item.amount * exchangeRate).toLocaleString() }}
+            <div class="text-right flex items-center space-x-2">
+              <div>
+                <strong class="text-cq-charcoal block">
+                  {{ b.currency === 'TWD' ? 'NT$' + b.amount.toLocaleString() : currentCurrency.symbol + b.amount }}
+                </strong>
+                <span v-if="b.currency !== 'TWD'" class="text-[10px] text-cq-muted block">
+                  ≈ NT${{ Math.round(b.amount * exchangeRate).toLocaleString() }}
                 </span>
               </div>
-              <div class="flex items-center space-x-1 text-cq-muted pl-1 border-l border-cq-border/60">
-                <button @click="openEditBudgetModal(item)" class="hover:text-cq-charcoal p-1" title="編輯">
-                  <i class="fa-regular fa-pen-to-square text-xs"></i>
-                </button>
-                <button @click="deleteBudgetItem(item.id)" class="hover:text-cq-cinnabar p-1" title="刪除">
-                  <i class="fa-regular fa-trash-can text-xs"></i>
-                </button>
-              </div>
+              <button type="button" @click="openEditBudgetModal(b)" class="text-cq-muted hover:text-cq-charcoal p-1" title="編輯">
+                <i class="fa-regular fa-pen-to-square text-xs"></i>
+              </button>
+              <button type="button" @click="deleteBudgetItem(b.id)" class="text-cq-muted hover:text-cq-cinnabar p-1" title="刪除">
+                <i class="fa-regular fa-trash-can text-xs"></i>
+              </button>
             </div>
           </div>
         </div>
-        <div v-else class="text-xs text-cq-muted bg-cq-wash/40 p-4 rounded-xl border border-dashed border-cq-border text-center space-y-1">
-          <p class="font-medium text-cq-charcoal">目前尚無個人限定項目</p>
-          <p class="text-[11px]">點擊上方「新增預算項目」選擇「個人限定項目」即可新增個人寫真、私房紀念品、特定專屬體驗等費用。</p>
+        <div v-else class="text-xs text-cq-muted p-3 bg-cq-wash/40 rounded-xl text-center border border-dashed border-cq-border">
+          目前尚無個人限定項目（如寫真/特殊私房行程）。
         </div>
       </div>
     </section>
 
-    <!-- TAB 3: 機酒保險 (FlightHotel) - 4大區全手動編輯與醒目提醒 -->
+    <!-- TAB 3: 機酒保險 (FlightHotel) -->
     <section v-show="activeTab === 'flightHotel'" class="space-y-4">
-
-      <!-- 區塊 1: 住宿資訊 -->
+      <!-- 1. 住宿資訊 -->
       <div class="bg-white rounded-2xl p-4 border border-cq-border shadow-sm space-y-3">
         <div class="flex justify-between items-start">
           <div class="flex items-center space-x-2">
             <i class="fa-solid fa-hotel text-xs text-cq-gold"></i>
-            <h3 class="font-serif-cq font-bold text-sm text-cq-charcoal">住宿資訊</h3>
-            <span v-if="stayInfo.staySummary" class="text-[11px] font-mono px-2 py-0.5 rounded-full bg-cq-wash border border-cq-border text-cq-muted">
-              {{ stayInfo.staySummary }}
-            </span>
+            <h3 class="font-serif-cq font-bold text-sm text-cq-charcoal">住宿資訊 · {{ stayInfo.staySummary || '連住' }}</h3>
           </div>
           <div class="flex items-center space-x-2">
-            <span v-if="stayInfo.priceText" class="text-xs font-mono px-2 py-0.5 rounded bg-cq-goldLight text-cq-gold font-bold border border-cq-gold/30">
-              {{ stayInfo.priceText }}
+            <span class="text-xs font-mono px-2 py-0.5 rounded bg-cq-wash border border-cq-border text-cq-charcoal font-semibold">
+              {{ stayInfo.priceText || 'NT$3,900' }}
             </span>
-            <button 
-              @click="openEditStayModal" 
-              class="text-xs text-cq-charcoal hover:text-cq-cinnabar font-medium flex items-center space-x-1 p-1"
-              title="編輯住宿資訊"
-            >
+            <button type="button" @click="openEditStayModal" class="text-cq-muted hover:text-cq-charcoal p-1 text-xs" title="編輯住宿">
               <i class="fa-regular fa-pen-to-square"></i>
-              <span>編輯</span>
             </button>
           </div>
         </div>
 
-        <div class="space-y-1.5 text-xs">
+        <div class="space-y-2 text-xs">
           <h4 class="font-bold text-cq-charcoal text-sm">{{ stayInfo.hotelName }}</h4>
-          <p v-if="stayInfo.address" class="text-cq-muted leading-relaxed flex items-start space-x-1 pt-0.5">
+          
+          <div class="flex items-start space-x-1.5 text-cq-muted leading-relaxed">
             <i class="fa-solid fa-location-dot mt-0.5 text-cq-cinnabar flex-shrink-0"></i>
             <span class="break-all">{{ stayInfo.address }}</span>
-          </p>
-          <p v-if="stayInfo.phone" class="text-cq-muted flex items-center space-x-1">
+          </div>
+
+          <div v-if="stayInfo.phone" class="flex items-center space-x-1.5 text-cq-muted">
             <i class="fa-solid fa-phone text-cq-moss flex-shrink-0"></i>
             <span>電話：{{ stayInfo.phone }}</span>
-          </p>
-          <div v-if="stayInfo.roomType" class="p-2 bg-cq-wash rounded-xl border border-cq-border text-cq-charcoal font-mono text-[11px] mt-1.5">
-            房型：{{ stayInfo.roomType }}
           </div>
-          <p v-if="stayInfo.notes" class="text-[11px] text-cq-muted mt-1 leading-relaxed bg-cq-wash/60 p-2 rounded-xl">
+
+          <!-- 房型顯示 -->
+          <div v-if="stayInfo.roomType" class="flex items-start space-x-1.5 text-cq-muted leading-relaxed">
+            <i class="fa-solid fa-bed mt-0.5 text-cq-gold flex-shrink-0"></i>
+            <span>房型：{{ stayInfo.roomType }}</span>
+          </div>
+
+          <!-- 重要門禁密碼卡 (紅色醒目卡片) -->
+          <div v-if="stayInfo.accessCode" class="mt-2.5 p-3 rounded-2xl bg-rose-50 border-2 border-rose-400 text-rose-900 shadow-sm flex items-center justify-between gap-2">
+            <div class="flex items-start space-x-2 min-w-0">
+              <i class="fa-solid fa-key text-rose-600 text-sm mt-0.5 flex-shrink-0"></i>
+              <div class="min-w-0">
+                <span class="text-[10px] font-bold uppercase tracking-wider text-rose-700 block">重要大樓門禁 / 通行密碼</span>
+                <strong class="text-xs font-mono font-bold text-rose-950 block mt-0.5 break-all">{{ stayInfo.accessCode }}</strong>
+              </div>
+            </div>
+            <button 
+              type="button"
+              @click="copyText(stayInfo.accessCode)" 
+              class="flex-shrink-0 px-2.5 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-[11px] font-medium transition shadow-xs flex items-center space-x-1 active:scale-95"
+              title="複製門禁密碼"
+            >
+              <i class="fa-regular fa-copy text-[10px]"></i>
+              <span>複製密碼</span>
+            </button>
+          </div>
+
+          <!-- 醒目提醒卡 -->
+          <div 
+            v-if="stayInfo.alertTitle || stayInfo.alertText" 
+            class="mt-2 p-3 rounded-xl border space-y-1"
+            :class="{
+              'bg-amber-50 border-amber-300 text-amber-900': stayInfo.alertType === 'warning',
+              'bg-rose-50 border-rose-300 text-rose-900': stayInfo.alertType === 'danger',
+              'bg-sky-50 border-sky-300 text-sky-900': stayInfo.alertType === 'info'
+            }"
+          >
+            <div class="flex items-center space-x-1.5 font-bold text-xs">
+              <i class="fa-solid fa-bell text-xs"></i>
+              <span>{{ stayInfo.alertTitle }}</span>
+            </div>
+            <p v-if="stayInfo.alertText" class="text-[11px] leading-relaxed opacity-90">{{ stayInfo.alertText }}</p>
+          </div>
+
+          <p v-if="stayInfo.notes" class="text-xs text-cq-muted leading-relaxed pt-1">
             {{ stayInfo.notes }}
           </p>
         </div>
 
-        <!-- 住宿專屬醒目提醒卡 -->
-        <div 
-          v-if="stayInfo.alertText" 
-          class="p-3 rounded-xl border shadow-sm space-y-1"
-          :class="stayInfo.alertType === 'danger' 
-            ? 'bg-rose-50 border-rose-300 text-rose-900' 
-            : (stayInfo.alertType === 'info' ? 'bg-sky-50 border-sky-300 text-sky-900' : 'bg-amber-50 border-amber-400 text-amber-900')"
-        >
-          <div class="flex items-center space-x-1.5 font-bold text-xs">
-            <i 
-              class="fa-solid" 
-              :class="stayInfo.alertType === 'danger' 
-                ? 'fa-circle-exclamation text-rose-600' 
-                : (stayInfo.alertType === 'info' ? 'fa-circle-info text-sky-600' : 'fa-triangle-exclamation text-amber-600')"
-            ></i>
-            <span>{{ stayInfo.alertTitle || '住宿特別提醒' }}</span>
-          </div>
-          <p class="text-[11px] leading-relaxed opacity-95">
-            {{ stayInfo.alertText }}
-          </p>
-        </div>
-
-        <!-- 操作按鈕 -->
         <div class="flex space-x-2 pt-1">
           <button 
-            v-if="stayInfo.address"
+            type="button"
             @click="copyText(stayInfo.address)" 
             class="flex-1 py-2 bg-cq-wash hover:bg-cq-border text-cq-charcoal rounded-xl text-xs font-medium transition flex items-center justify-center space-x-1"
           >
@@ -713,62 +722,48 @@
         </div>
       </div>
 
-      <!-- 區塊 2: 機票資訊 -->
+      <!-- 2. 機票資訊 -->
       <div class="bg-white rounded-2xl p-4 border border-cq-border shadow-sm space-y-3">
         <div class="flex items-center justify-between pb-2 border-b border-cq-border">
           <div class="flex items-center space-x-2">
             <span class="w-2.5 h-2.5 rounded-full bg-cq-cinnabar"></span>
             <div>
-              <h3 class="font-serif-cq font-bold text-sm text-cq-charcoal">{{ flightInfo.airlineName }} · 來回機票</h3>
+              <h3 class="font-serif-cq font-bold text-sm text-cq-charcoal">{{ flightInfo.airlineName }}</h3>
               <p class="text-[10px] text-cq-muted font-mono">{{ flightInfo.subtitle }}</p>
             </div>
           </div>
           <div class="flex items-center space-x-2">
-            <span v-if="flightInfo.tagText" class="text-[10px] font-mono px-2 py-0.5 rounded-md bg-cq-cinnabarLight text-cq-cinnabar font-semibold border border-cq-cinnabar/30">
-              {{ flightInfo.tagText }}
+            <span class="text-[10px] font-mono px-2 py-0.5 rounded-md bg-cq-cinnabarLight text-cq-cinnabar font-semibold border border-cq-cinnabar/30">
+              {{ flightInfo.tagText || '行李直掛' }}
             </span>
-            <button 
-              @click="openEditFlightModal" 
-              class="text-xs text-cq-charcoal hover:text-cq-cinnabar font-medium flex items-center space-x-1 p-1"
-              title="編輯機票航程"
-            >
+            <button type="button" @click="openEditFlightModal" class="text-cq-muted hover:text-cq-charcoal p-1 text-xs" title="編輯機票">
               <i class="fa-regular fa-pen-to-square"></i>
-              <span>編輯</span>
             </button>
           </div>
         </div>
 
-        <!-- 去程航段 -->
+        <!-- 去程 -->
         <div class="space-y-2">
-          <div class="flex justify-between items-center">
-            <span class="font-serif-cq font-bold text-xs text-cq-charcoal">{{ flightInfo.outboundTitle }}</span>
-            <span class="text-[10px] text-cq-muted font-mono">{{ flightInfo.outboundRoute }}</span>
-          </div>
-
-          <div class="space-y-2 text-xs font-mono">
+          <span class="font-serif-cq font-bold text-xs text-cq-charcoal block">{{ flightInfo.outboundTitle }}</span>
+          <div class="space-y-1.5 text-xs font-mono">
             <div class="p-2.5 bg-cq-wash/70 rounded-xl border border-cq-border flex items-center justify-between">
               <div>
-                <span class="text-[10px] text-cq-muted block">出發</span>
-                <strong class="text-sm font-bold text-cq-charcoal block mt-0.5">{{ flightInfo.outboundLeg1DepTime }} {{ flightInfo.outboundLeg1DepCode }}</strong>
+                <span class="text-[10px] text-cq-muted block">起飛</span>
+                <strong class="text-sm font-bold text-cq-charcoal block">{{ flightInfo.outboundLeg1DepTime }} {{ flightInfo.outboundLeg1DepCode }}</strong>
                 <span class="text-[11px] text-cq-charcoal font-sans">{{ flightInfo.outboundLeg1DepAirport }}</span>
               </div>
               <div class="text-center px-2">
-                <i class="fa-solid fa-arrow-right text-cq-muted text-xs"></i>
-                <span class="block text-[9px] text-cq-muted mt-0.5">{{ flightInfo.outboundLeg1Duration }}</span>
+                <i class="fa-solid fa-plane text-cq-muted text-xs"></i>
               </div>
               <div class="text-right">
                 <span class="text-[10px] text-cq-muted block">抵達轉機</span>
-                <strong class="text-sm font-bold text-cq-charcoal block mt-0.5">{{ flightInfo.outboundLeg1ArrTime }} {{ flightInfo.outboundLeg1ArrCode }}</strong>
-                <span class="text-[11px] text-cq-charcoal font-sans">{{ flightInfo.outboundLeg1ArrAirport }}</span>
+                <strong class="text-sm font-bold text-cq-charcoal block">18:40 HKG</strong>
+                <span class="text-[11px] text-cq-charcoal font-sans">香港機場 T1</span>
               </div>
             </div>
 
-            <!-- 去程轉機時間條 -->
             <div class="flex items-center justify-between px-3 py-2 rounded-xl bg-cq-goldLight border border-cq-gold/40 text-xs text-cq-gold font-sans shadow-sm">
-              <span class="flex items-center space-x-2">
-                <i class="fa-solid fa-clock-rotate-left text-xs text-cq-gold"></i>
-                <span>轉機等待：<strong class="font-mono text-sm text-cq-charcoal">{{ flightInfo.outboundLayoverDuration }}</strong></span>
-              </span>
+              <span>轉機等待：<strong class="font-mono text-sm text-cq-charcoal">{{ flightInfo.outboundLayoverDuration }}</strong></span>
               <span class="font-mono text-[10px] font-bold bg-white text-cq-gold px-2 py-0.5 rounded-md border border-cq-gold/30">
                 {{ flightInfo.outboundLayoverNote }}
               </span>
@@ -777,53 +772,43 @@
             <div class="p-2.5 bg-cq-wash/70 rounded-xl border border-cq-border flex items-center justify-between">
               <div>
                 <span class="text-[10px] text-cq-muted block">轉機出發</span>
-                <strong class="text-sm font-bold text-cq-charcoal block mt-0.5">{{ flightInfo.outboundLeg2DepTime }} {{ flightInfo.outboundLeg2DepCode }}</strong>
-                <span class="text-[11px] text-cq-charcoal font-sans">{{ flightInfo.outboundLeg2DepAirport }}</span>
+                <strong class="text-sm font-bold text-cq-charcoal block">20:50 HKG</strong>
+                <span class="text-[11px] text-cq-charcoal font-sans">香港機場 T2</span>
               </div>
               <div class="text-center px-2">
-                <i class="fa-solid fa-arrow-right text-cq-muted text-xs"></i>
-                <span class="block text-[9px] text-cq-muted mt-0.5">{{ flightInfo.outboundLeg2Duration }}</span>
+                <i class="fa-solid fa-plane text-cq-muted text-xs"></i>
               </div>
               <div class="text-right">
-                <span class="text-[10px] text-cq-muted block">抵達</span>
-                <strong class="text-sm font-bold text-cq-cinnabar block mt-0.5">{{ flightInfo.outboundLeg2ArrTime }} {{ flightInfo.outboundLeg2ArrCode }}</strong>
+                <span class="text-[10px] text-cq-muted block">抵達目的地</span>
+                <strong class="text-sm font-bold text-cq-cinnabar block">{{ flightInfo.outboundLeg2ArrTime }} {{ flightInfo.outboundLeg2ArrCode }}</strong>
                 <span class="text-[11px] text-cq-charcoal font-sans">{{ flightInfo.outboundLeg2ArrAirport }}</span>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- 回程航段 -->
+        <!-- 回程 -->
         <div class="space-y-2 pt-2 border-t border-cq-border/60">
-          <div class="flex justify-between items-center">
-            <span class="font-serif-cq font-bold text-xs text-cq-charcoal">{{ flightInfo.inboundTitle }}</span>
-            <span class="text-[10px] text-cq-muted font-mono">{{ flightInfo.inboundRoute }}</span>
-          </div>
-
-          <div class="space-y-2 text-xs font-mono">
+          <span class="font-serif-cq font-bold text-xs text-cq-charcoal block">{{ flightInfo.inboundTitle }}</span>
+          <div class="space-y-1.5 text-xs font-mono">
             <div class="p-2.5 bg-cq-wash/70 rounded-xl border border-cq-border flex items-center justify-between">
               <div>
-                <span class="text-[10px] text-cq-muted block">起飛</span>
-                <strong class="text-sm font-bold text-cq-charcoal block mt-0.5">{{ flightInfo.inboundLeg1DepTime }} {{ flightInfo.inboundLeg1DepCode }}</strong>
+                <span class="text-[10px] text-cq-muted block">起飛返程</span>
+                <strong class="text-sm font-bold text-cq-charcoal block">{{ flightInfo.inboundLeg1DepTime }} {{ flightInfo.inboundLeg1DepCode }}</strong>
                 <span class="text-[11px] text-cq-charcoal font-sans">{{ flightInfo.inboundLeg1DepAirport }}</span>
               </div>
               <div class="text-center px-2">
-                <i class="fa-solid fa-arrow-right text-cq-muted text-xs"></i>
-                <span class="block text-[9px] text-cq-muted mt-0.5">{{ flightInfo.inboundLeg1Duration }}</span>
+                <i class="fa-solid fa-plane text-cq-muted text-xs"></i>
               </div>
               <div class="text-right">
                 <span class="text-[10px] text-cq-muted block">抵達轉機</span>
-                <strong class="text-sm font-bold text-cq-charcoal block mt-0.5">{{ flightInfo.inboundLeg1ArrTime }} {{ flightInfo.inboundLeg1ArrCode }}</strong>
-                <span class="text-[11px] text-cq-charcoal font-sans">{{ flightInfo.inboundLeg1ArrAirport }}</span>
+                <strong class="text-sm font-bold text-cq-charcoal block">11:25 HKG</strong>
+                <span class="text-[11px] text-cq-charcoal font-sans">香港機場 T1</span>
               </div>
             </div>
 
-            <!-- 回程轉機時間條 -->
             <div class="flex items-center justify-between px-3 py-2 rounded-xl bg-cq-mossLight border border-cq-moss/40 text-xs text-cq-moss font-sans shadow-sm">
-              <span class="flex items-center space-x-2">
-                <i class="fa-solid fa-clock-rotate-left text-xs text-cq-moss"></i>
-                <span>轉機等待：<strong class="font-mono text-sm text-cq-charcoal">{{ flightInfo.inboundLayoverDuration }}</strong></span>
-              </span>
+              <span>轉機等待：<strong class="font-mono text-sm text-cq-charcoal">{{ flightInfo.inboundLayoverDuration }}</strong></span>
               <span class="font-mono text-[10px] font-bold bg-white text-cq-moss px-2 py-0.5 rounded-md border border-cq-moss/30">
                 {{ flightInfo.inboundLayoverNote }}
               </span>
@@ -831,124 +816,96 @@
 
             <div class="p-2.5 bg-cq-wash/70 rounded-xl border border-cq-border flex items-center justify-between">
               <div>
-                <span class="text-[10px] text-cq-muted block">再出發</span>
-                <strong class="text-sm font-bold text-cq-charcoal block mt-0.5">{{ flightInfo.inboundLeg2DepTime }} {{ flightInfo.inboundLeg2DepCode }}</strong>
-                <span class="text-[11px] text-cq-charcoal font-sans">{{ flightInfo.inboundLeg2DepAirport }}</span>
+                <span class="text-[10px] text-cq-muted block">轉機起飛</span>
+                <strong class="text-sm font-bold text-cq-charcoal block">13:40 HKG</strong>
+                <span class="text-[11px] text-cq-charcoal font-sans">香港機場 T1</span>
               </div>
               <div class="text-center px-2">
-                <i class="fa-solid fa-arrow-right text-cq-muted text-xs"></i>
-                <span class="block text-[9px] text-cq-muted mt-0.5">{{ flightInfo.inboundLeg2Duration }}</span>
+                <i class="fa-solid fa-plane text-cq-muted text-xs"></i>
               </div>
               <div class="text-right">
-                <span class="text-[10px] text-cq-muted block">抵達</span>
-                <strong class="text-sm font-bold text-cq-moss block mt-0.5">{{ flightInfo.inboundLeg2ArrTime }} {{ flightInfo.inboundLeg2ArrCode }}</strong>
+                <span class="text-[10px] text-cq-muted block">平安返家</span>
+                <strong class="text-sm font-bold text-cq-moss block">{{ flightInfo.inboundLeg2ArrTime }} {{ flightInfo.inboundLeg2ArrCode }}</strong>
                 <span class="text-[11px] text-cq-charcoal font-sans">{{ flightInfo.inboundLeg2ArrAirport }}</span>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- 航班醒目提醒卡片 -->
+        <!-- 醒目提醒卡 -->
         <div 
-          v-if="flightInfo.alertText" 
-          class="p-3 rounded-xl border shadow-sm space-y-1"
-          :class="flightInfo.alertType === 'danger' 
-            ? 'bg-rose-50 border-rose-300 text-rose-900' 
-            : (flightInfo.alertType === 'info' ? 'bg-sky-50 border-sky-300 text-sky-900' : 'bg-amber-50 border-amber-400 text-amber-900')"
+          v-if="flightInfo.alertTitle || flightInfo.alertText" 
+          class="p-3 rounded-xl border space-y-1"
+          :class="{
+            'bg-amber-50 border-amber-300 text-amber-900': flightInfo.alertType === 'warning',
+            'bg-rose-50 border-rose-300 text-rose-900': flightInfo.alertType === 'danger',
+            'bg-sky-50 border-sky-300 text-sky-900': flightInfo.alertType === 'info'
+          }"
         >
           <div class="flex items-center space-x-1.5 font-bold text-xs">
-            <i 
-              class="fa-solid" 
-              :class="flightInfo.alertType === 'danger' 
-                ? 'fa-circle-exclamation text-rose-600' 
-                : (flightInfo.alertType === 'info' ? 'fa-circle-info text-sky-600' : 'fa-triangle-exclamation text-amber-600')"
-            ></i>
-            <span>{{ flightInfo.alertTitle || '航班特別叮嚀' }}</span>
+            <i class="fa-solid fa-bell text-xs"></i>
+            <span>{{ flightInfo.alertTitle }}</span>
           </div>
-          <p class="text-[11px] leading-relaxed opacity-95">
-            {{ flightInfo.alertText }}
-          </p>
+          <p v-if="flightInfo.alertText" class="text-[11px] leading-relaxed opacity-90">{{ flightInfo.alertText }}</p>
         </div>
       </div>
 
-      <!-- 區塊 3: 旅平險 + 不便險 -->
+      <!-- 3. 旅平險+不便險 -->
       <div class="bg-white rounded-2xl p-4 border border-cq-border shadow-sm space-y-3">
         <div class="flex justify-between items-center pb-2 border-b border-cq-border">
           <div class="flex items-center space-x-2">
             <i class="fa-solid fa-shield-heart text-xs text-cq-moss"></i>
             <div>
-              <h3 class="font-serif-cq font-bold text-sm text-cq-charcoal">{{ insuranceInfo.companyName }} · 旅平險+不便險</h3>
+              <h3 class="font-serif-cq font-bold text-sm text-cq-charcoal">{{ insuranceInfo.companyName }}</h3>
               <p class="text-[10px] text-cq-muted font-mono">{{ insuranceInfo.planName }}</p>
             </div>
           </div>
           <div class="flex items-center space-x-2">
-            <span v-if="insuranceInfo.badgeText" class="text-[10px] font-mono px-2 py-0.5 rounded-md bg-cq-mossLight text-cq-moss font-semibold border border-cq-moss/30">
-              {{ insuranceInfo.badgeText }}
+            <span class="text-[10px] font-mono px-2 py-0.5 rounded-md bg-cq-mossLight text-cq-moss font-semibold border border-cq-moss/30">
+              {{ insuranceInfo.badgeText || '線上投保' }}
             </span>
-            <button 
-              @click="openEditInsuranceModal" 
-              class="text-xs text-cq-charcoal hover:text-cq-cinnabar font-medium flex items-center space-x-1 p-1"
-              title="編輯保險內容"
-            >
+            <button type="button" @click="openEditInsuranceModal" class="text-cq-muted hover:text-cq-charcoal p-1 text-xs" title="編輯保險">
               <i class="fa-regular fa-pen-to-square"></i>
-              <span>編輯</span>
             </button>
           </div>
         </div>
 
         <div class="space-y-2 text-xs">
           <div class="p-2.5 bg-cq-wash/70 rounded-xl border border-cq-border space-y-1">
-            <div class="font-semibold text-cq-charcoal flex items-center space-x-1.5">
-              <i class="fa-solid fa-user-shield text-cq-moss text-xs"></i>
-              <span>{{ insuranceInfo.section1Title || '旅行平安險' }}</span>
-            </div>
-            <p class="text-cq-muted leading-relaxed pl-4 text-[11px]">
-              {{ insuranceInfo.section1Desc }}
-            </p>
+            <span class="font-bold text-cq-charcoal block">旅行平安險重點保障</span>
+            <p class="text-cq-muted leading-relaxed text-[11px]">{{ insuranceInfo.section1Desc }}</p>
           </div>
-
           <div class="p-2.5 bg-cq-wash/70 rounded-xl border border-cq-border space-y-1">
-            <div class="font-semibold text-cq-charcoal flex items-center space-x-1.5">
-              <i class="fa-solid fa-plane-slash text-cq-cinnabar text-xs"></i>
-              <span>{{ insuranceInfo.section2Title || '旅遊不便險' }}</span>
-            </div>
-            <p class="text-cq-muted leading-relaxed pl-4 text-[11px]">
-              {{ insuranceInfo.section2Desc }}
-            </p>
+            <span class="font-bold text-cq-charcoal block">海外不便險重點保障</span>
+            <p class="text-cq-muted leading-relaxed text-[11px]">{{ insuranceInfo.section2Desc }}</p>
           </div>
-        </div>
 
-        <!-- 保險醒目提醒卡片 -->
-        <div 
-          v-if="insuranceInfo.alertText" 
-          class="p-3 rounded-xl border shadow-sm space-y-1"
-          :class="insuranceInfo.alertType === 'danger' 
-            ? 'bg-rose-50 border-rose-300 text-rose-900' 
-            : (insuranceInfo.alertType === 'info' ? 'bg-sky-50 border-sky-300 text-sky-900' : 'bg-amber-50 border-amber-400 text-amber-900')"
-        >
-          <div class="flex items-center space-x-1.5 font-bold text-xs">
-            <i 
-              class="fa-solid" 
-              :class="insuranceInfo.alertType === 'danger' 
-                ? 'fa-circle-exclamation text-rose-600' 
-                : (insuranceInfo.alertType === 'info' ? 'fa-circle-info text-sky-600' : 'fa-triangle-exclamation text-amber-600')"
-            ></i>
-            <span>{{ insuranceInfo.alertTitle || '投保重要提醒' }}</span>
+          <!-- 醒目提醒卡 -->
+          <div 
+            v-if="insuranceInfo.alertTitle || insuranceInfo.alertText" 
+            class="p-3 rounded-xl border space-y-1"
+            :class="{
+              'bg-amber-50 border-amber-300 text-amber-900': insuranceInfo.alertType === 'warning',
+              'bg-rose-50 border-rose-300 text-rose-900': insuranceInfo.alertType === 'danger',
+              'bg-sky-50 border-sky-300 text-sky-900': insuranceInfo.alertType === 'info'
+            }"
+          >
+            <div class="flex items-center space-x-1.5 font-bold text-xs">
+              <i class="fa-solid fa-bell text-xs"></i>
+              <span>{{ insuranceInfo.alertTitle }}</span>
+            </div>
+            <p v-if="insuranceInfo.alertText" class="text-[11px] leading-relaxed opacity-90">{{ insuranceInfo.alertText }}</p>
           </div>
-          <p class="text-[11px] leading-relaxed opacity-95">
-            {{ insuranceInfo.alertText }}
-          </p>
         </div>
 
         <div class="flex space-x-2 pt-1">
           <button 
-            v-if="insuranceInfo.linkUrl"
             type="button"
+            v-if="insuranceInfo.linkUrl"
             @click="copyText(insuranceInfo.linkUrl)" 
-            class="flex-1 py-2 bg-cq-wash hover:bg-cq-border text-cq-charcoal rounded-xl text-xs font-medium transition flex items-center justify-center space-x-1"
+            class="flex-1 py-2 bg-cq-wash hover:bg-cq-border text-cq-charcoal rounded-xl text-xs font-medium transition"
           >
-            <i class="fa-regular fa-copy text-[11px]"></i>
-            <span>複製投保連結</span>
+            複製投保網址
           </button>
           <a 
             v-if="insuranceInfo.linkUrl"
@@ -956,141 +913,124 @@
             target="_blank" 
             class="px-4 py-2 bg-cq-charcoal text-white rounded-xl text-xs font-medium transition flex items-center justify-center space-x-1"
           >
-            <span>線上試算投保</span>
+            <span>線上投保</span>
             <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
           </a>
         </div>
       </div>
 
-      <!-- 區塊 4: 網路漫遊 (SIM / eSIM / 漫遊卡) -->
+      <!-- 4. 網路漫遊 -->
       <div class="bg-white rounded-2xl p-4 border border-cq-border shadow-sm space-y-3">
         <div class="flex justify-between items-center pb-2 border-b border-cq-border">
           <div class="flex items-center space-x-2">
-            <i class="fa-solid fa-wifi text-xs text-cq-gold"></i>
+            <i class="fa-solid fa-sim-card text-xs text-cq-moss"></i>
             <div>
-              <h3 class="font-serif-cq font-bold text-sm text-cq-charcoal">{{ roamingInfo.providerName }} · 網路漫遊</h3>
+              <h3 class="font-serif-cq font-bold text-sm text-cq-charcoal">{{ roamingInfo.providerName }}</h3>
               <p class="text-[10px] text-cq-muted font-mono">{{ roamingInfo.planName }}</p>
             </div>
           </div>
           <div class="flex items-center space-x-2">
-            <span v-if="roamingInfo.tagText" class="text-[10px] font-mono px-2 py-0.5 rounded-md bg-cq-goldLight text-cq-gold font-semibold border border-cq-gold/30">
-              {{ roamingInfo.tagText }}
+            <span class="text-[10px] font-mono bg-cq-mossLight text-cq-moss px-2 py-0.5 rounded font-semibold border border-cq-moss/30">
+              {{ roamingInfo.tagText || '免翻牆' }}
             </span>
-            <button 
-              @click="openEditRoamingModal" 
-              class="text-xs text-cq-charcoal hover:text-cq-cinnabar font-medium flex items-center space-x-1 p-1"
-              title="編輯漫遊網路"
-            >
+            <button type="button" @click="openEditRoamingModal" class="text-cq-muted hover:text-cq-charcoal p-1 text-xs" title="編輯漫遊">
               <i class="fa-regular fa-pen-to-square"></i>
-              <span>編輯</span>
             </button>
           </div>
         </div>
 
         <div class="space-y-2 text-xs">
           <div class="p-2.5 bg-cq-wash/70 rounded-xl border border-cq-border space-y-1">
-            <div class="font-semibold text-cq-charcoal flex items-center space-x-1.5">
-              <i class="fa-solid fa-sim-card text-cq-moss text-xs"></i>
-              <span>{{ roamingInfo.specTitle || '方案規格與用量' }}</span>
-            </div>
-            <p class="text-cq-muted leading-relaxed pl-4 text-[11px] whitespace-pre-line">
-              {{ roamingInfo.specDesc }}
-            </p>
+            <span class="font-bold text-cq-charcoal block">方案特性規格</span>
+            <p class="text-cq-muted leading-relaxed text-[11px] whitespace-pre-line">{{ roamingInfo.specDesc }}</p>
           </div>
 
           <div v-if="roamingInfo.instructionText" class="p-2.5 bg-cq-wash/70 rounded-xl border border-cq-border space-y-1">
-            <div class="font-semibold text-cq-charcoal flex items-center space-x-1.5">
-              <i class="fa-solid fa-key text-cq-gold text-xs"></i>
-              <span>開通指引 / 注意事項</span>
+            <span class="font-bold text-cq-charcoal block">開通使用指引</span>
+            <p class="text-cq-muted leading-relaxed text-[11px] whitespace-pre-line">{{ roamingInfo.instructionText }}</p>
+          </div>
+
+          <!-- 醒目提醒卡 -->
+          <div 
+            v-if="roamingInfo.alertTitle || roamingInfo.alertText" 
+            class="p-3 rounded-xl border space-y-1"
+            :class="{
+              'bg-amber-50 border-amber-300 text-amber-900': roamingInfo.alertType === 'warning',
+              'bg-rose-50 border-rose-300 text-rose-900': roamingInfo.alertType === 'danger',
+              'bg-sky-50 border-sky-300 text-sky-900': roamingInfo.alertType === 'info'
+            }"
+          >
+            <div class="flex items-center space-x-1.5 font-bold text-xs">
+              <i class="fa-solid fa-bell text-xs"></i>
+              <span>{{ roamingInfo.alertTitle }}</span>
             </div>
-            <p class="text-cq-muted leading-relaxed pl-4 text-[11px] whitespace-pre-line font-mono">
-              {{ roamingInfo.instructionText }}
-            </p>
+            <p v-if="roamingInfo.alertText" class="text-[11px] leading-relaxed opacity-90">{{ roamingInfo.alertText }}</p>
           </div>
         </div>
 
-        <!-- 網路漫遊醒目提醒卡片 -->
-        <div 
-          v-if="roamingInfo.alertText" 
-          class="p-3 rounded-xl border shadow-sm space-y-1"
-          :class="roamingInfo.alertType === 'danger' 
-            ? 'bg-rose-50 border-rose-300 text-rose-900' 
-            : (roamingInfo.alertType === 'info' ? 'bg-sky-50 border-sky-300 text-sky-900' : 'bg-amber-50 border-amber-400 text-amber-900')"
-        >
-          <div class="flex items-center space-x-1.5 font-bold text-xs">
-            <i 
-              class="fa-solid" 
-              :class="roamingInfo.alertType === 'danger' 
-                ? 'fa-circle-exclamation text-rose-600' 
-                : (roamingInfo.alertType === 'info' ? 'fa-circle-info text-sky-600' : 'fa-triangle-exclamation text-amber-600')"
-            ></i>
-            <span>{{ roamingInfo.alertTitle || '網路漫遊醒目提醒' }}</span>
-          </div>
-          <p class="text-[11px] leading-relaxed opacity-95">
-            {{ roamingInfo.alertText }}
-          </p>
-        </div>
-
-        <div v-if="roamingInfo.linkUrl" class="flex space-x-2 pt-1">
+        <div class="flex space-x-2 pt-1">
           <button 
             type="button"
+            v-if="roamingInfo.linkUrl"
             @click="copyText(roamingInfo.linkUrl)" 
-            class="flex-1 py-2 bg-cq-wash hover:bg-cq-border text-cq-charcoal rounded-xl text-xs font-medium transition flex items-center justify-center space-x-1"
+            class="flex-1 py-2 bg-cq-wash hover:bg-cq-border text-cq-charcoal rounded-xl text-xs font-medium transition"
           >
-            <i class="fa-regular fa-copy text-[11px]"></i>
-            <span>複製方案連結</span>
+            複製購買網址
           </button>
           <a 
+            v-if="roamingInfo.linkUrl"
             :href="roamingInfo.linkUrl" 
             target="_blank" 
             class="px-4 py-2 bg-cq-charcoal text-white rounded-xl text-xs font-medium transition flex items-center justify-center space-x-1"
           >
-            <span>前往官網/商品頁</span>
+            <span>前往購買</span>
             <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
           </a>
         </div>
       </div>
-
     </section>
 
-    <!-- TAB 4: 美食、零嘴飲品與備用景點 -->
+    <!-- TAB 4: 美食備用 (Food / Snacks / Backup) -->
     <section v-show="activeTab === 'foodBackup'" class="space-y-4">
-      
-      <!-- 三合一子標籤 -->
-      <div class="flex p-1 bg-cq-wash rounded-2xl border border-cq-border text-xs font-medium">
+      <!-- 三合一子導覽標籤：推薦餐廳、飲品小吃、備用口袋景點 -->
+      <div class="flex p-1 bg-white rounded-2xl border border-cq-border text-xs font-medium shadow-sm">
         <button 
+          type="button"
           @click="foodSubTab = 'food'" 
           class="flex-1 py-2 rounded-xl transition text-center"
-          :class="foodSubTab === 'food' ? 'bg-white text-cq-charcoal shadow-sm font-bold' : 'text-cq-muted'"
+          :class="foodSubTab === 'food' ? 'bg-cq-charcoal text-white shadow-sm font-bold' : 'text-cq-muted hover:text-cq-charcoal'"
         >
-          必吃美食
+          推薦餐廳
         </button>
         <button 
+          type="button"
           @click="foodSubTab = 'snacks'" 
           class="flex-1 py-2 rounded-xl transition text-center"
-          :class="foodSubTab === 'snacks' ? 'bg-white text-cq-charcoal shadow-sm font-bold' : 'text-cq-muted'"
+          :class="foodSubTab === 'snacks' ? 'bg-cq-charcoal text-white shadow-sm font-bold' : 'text-cq-muted hover:text-cq-charcoal'"
         >
-          必吃零嘴飲品
+          飲品小吃
         </button>
         <button 
+          type="button"
           @click="foodSubTab = 'backup'" 
           class="flex-1 py-2 rounded-xl transition text-center"
-          :class="foodSubTab === 'backup' ? 'bg-white text-cq-charcoal shadow-sm font-bold' : 'text-cq-muted'"
+          :class="foodSubTab === 'backup' ? 'bg-cq-charcoal text-white shadow-sm font-bold' : 'text-cq-muted hover:text-cq-charcoal'"
         >
           備用口袋景點
         </button>
       </div>
 
-      <!-- 子頁面 1: 必吃美食 -->
+      <!-- 子頁面 1: 推薦餐廳 -->
       <div v-show="foodSubTab === 'food'" class="space-y-3">
         <div class="flex justify-between items-center">
           <span class="text-xs text-cq-muted">已打卡 {{ checkedInFoodCount }} / {{ foodList.length }} 間</span>
           <button 
+            type="button"
             @click="openAddFoodModal" 
-            class="px-3 py-1.5 bg-cq-charcoal text-white rounded-xl text-xs font-medium hover:bg-black transition flex items-center space-x-1"
+            class="px-3 py-1.5 bg-cq-charcoal text-white rounded-xl text-xs font-medium hover:bg-black transition flex items-center space-x-1 active:scale-95 shadow-sm"
           >
             <i class="fa-solid fa-plus text-[10px]"></i>
-            <span>新增美食</span>
+            <span>新增餐廳</span>
           </button>
         </div>
 
@@ -1102,6 +1042,7 @@
             :class="food.isChecked ? 'opacity-70 bg-cq-wash/30' : ''"
           >
             <div class="flex">
+              <!-- 照片 -->
               <div v-if="food.image" class="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0 mr-3 border border-cq-border">
                 <img :src="food.image" :alt="food.name" class="w-full h-full object-cover">
               </div>
@@ -1117,6 +1058,7 @@
                     </h4>
                   </div>
 
+                  <!-- 打卡按鈕 -->
                   <button 
                     type="button"
                     @click="toggleFoodCheck(food)"
@@ -1128,6 +1070,7 @@
                   </button>
                 </div>
 
+                <!-- 招牌料理標籤列 -->
                 <div v-if="food.recommendations && food.recommendations.length > 0" class="flex flex-wrap gap-1.5 mt-2">
                   <span 
                     v-for="dish in food.recommendations" 
@@ -1140,21 +1083,35 @@
               </div>
             </div>
 
-            <!-- 地址與複製按鈕 -->
-            <div v-if="food.address" class="mt-2.5 text-xs bg-cq-wash/80 p-2.5 rounded-xl border border-cq-border/70 flex items-center justify-between gap-2">
-              <div class="flex items-start space-x-1.5 text-cq-charcoal/80 flex-1 leading-snug">
-                <i class="fa-solid fa-location-dot text-cq-cinnabar text-xs mt-0.5 flex-shrink-0"></i>
-                <span class="break-all text-[11px]">{{ food.address }}</span>
+            <!-- 地址與操作按鈕區：複製按鈕在地址欄內，線上團購獨立在右側 -->
+            <div v-if="food.address" class="mt-2.5 flex items-center justify-between gap-2">
+              <div class="flex items-center justify-between space-x-1.5 text-cq-charcoal/80 flex-1 leading-snug bg-cq-wash/80 p-2 rounded-xl border border-cq-border/70 min-w-0">
+                <div class="flex items-start space-x-1.5 min-w-0 flex-1">
+                  <i class="fa-solid fa-location-dot text-cq-cinnabar text-xs mt-0.5 flex-shrink-0"></i>
+                  <span class="break-all text-[11px]">{{ food.address }}</span>
+                </div>
+                <button 
+                  type="button"
+                  @click="copyText(food.address)" 
+                  class="flex-shrink-0 px-2 py-1 bg-white hover:bg-cq-border text-cq-charcoal border border-cq-border rounded-lg text-[11px] font-medium transition flex items-center space-x-1 shadow-sm active:scale-95 ml-1.5"
+                  title="複製店家地址"
+                >
+                  <i class="fa-regular fa-copy text-[10px] text-cq-cinnabar"></i>
+                  <span>複製</span>
+                </button>
               </div>
-              <button 
-                type="button"
-                @click="copyText(food.address)" 
-                class="flex-shrink-0 px-2.5 py-1 bg-white hover:bg-cq-border text-cq-charcoal border border-cq-border rounded-lg text-[11px] font-medium transition flex items-center space-x-1 shadow-sm active:scale-95"
-                title="複製店家地址"
+              
+              <a 
+                v-if="food.linkUrl"
+                :href="food.linkUrl" 
+                target="_blank" 
+                class="flex-shrink-0 px-2.5 py-2 rounded-xl bg-cq-goldLight text-cq-gold border border-cq-gold/30 hover:bg-cq-gold hover:text-white transition text-[11px] font-serif-cq font-bold shadow-xs active:scale-95 flex items-center space-x-1"
+                title="線上團購/官網連結"
               >
-                <i class="fa-regular fa-copy text-[10px] text-cq-cinnabar"></i>
-                <span>複製</span>
-              </button>
+                <i class="fa-solid fa-ticket-simple text-[10px]"></i>
+                <span>線上團購</span>
+                <i class="fa-solid fa-arrow-up-right-from-square text-[8px] opacity-75"></i>
+              </a>
             </div>
 
             <p v-if="food.note" class="text-xs text-cq-muted mt-2 leading-relaxed">
@@ -1166,10 +1123,10 @@
                 {{ food.priceCny ? currentCurrency.symbol + food.priceCny + ' (≈ NT$' + Math.round(food.priceCny * exchangeRate) + ')' : '依現場' }}
               </span>
               <div class="flex items-center space-x-2 text-cq-muted">
-                <button @click="openEditFoodModal(food)" class="hover:text-cq-charcoal p-1" title="編輯">
+                <button type="button" @click="openEditFoodModal(food)" class="hover:text-cq-charcoal p-1" title="編輯">
                   <i class="fa-regular fa-pen-to-square"></i>
                 </button>
-                <button @click="deleteFood(food.id)" class="hover:text-cq-cinnabar p-1" title="刪除">
+                <button type="button" @click="deleteFood(food.id)" class="hover:text-cq-cinnabar p-1" title="刪除">
                   <i class="fa-regular fa-trash-can"></i>
                 </button>
               </div>
@@ -1178,36 +1135,48 @@
         </div>
       </div>
 
-      <!-- 子頁面 2: 必吃零嘴飲品 -->
+      <!-- 子頁面 2: 飲品小吃 (全部 / 飲品 / 小吃 / 零嘴) -->
       <div v-show="foodSubTab === 'snacks'" class="space-y-3">
-        <div class="flex items-center justify-between">
-          <div class="flex space-x-1.5 text-xs font-mono">
+        <div class="flex items-center justify-between flex-wrap gap-2">
+          <div class="flex space-x-1 text-xs font-mono overflow-x-auto no-scrollbar py-0.5">
             <button 
+              type="button"
               @click="snackFilterType = 'ALL'"
-              class="px-2.5 py-1 rounded-full transition border text-[11px]"
+              class="px-2.5 py-1 rounded-full transition border text-[11px] flex-shrink-0"
               :class="snackFilterType === 'ALL' ? 'bg-cq-charcoal text-white border-cq-charcoal font-bold' : 'bg-white text-cq-muted border-cq-border'"
             >
               全部 ({{ snacksList.length }})
             </button>
             <button 
-              @click="snackFilterType = 'snack'"
-              class="px-2.5 py-1 rounded-full transition border text-[11px]"
-              :class="snackFilterType === 'snack' ? 'bg-cq-charcoal text-white border-cq-charcoal font-bold' : 'bg-white text-cq-muted border-cq-border'"
-            >
-              超商零嘴 ({{ snackCount }})
-            </button>
-            <button 
+              type="button"
               @click="snackFilterType = 'drink'"
-              class="px-2.5 py-1 rounded-full transition border text-[11px]"
+              class="px-2.5 py-1 rounded-full transition border text-[11px] flex-shrink-0"
               :class="snackFilterType === 'drink' ? 'bg-cq-charcoal text-white border-cq-charcoal font-bold' : 'bg-white text-cq-muted border-cq-border'"
             >
-              人氣飲品 ({{ drinkCount }})
+              飲品 ({{ drinkCount }})
+            </button>
+            <button 
+              type="button"
+              @click="snackFilterType = 'snackFood'"
+              class="px-2.5 py-1 rounded-full transition border text-[11px] flex-shrink-0"
+              :class="snackFilterType === 'snackFood' ? 'bg-cq-charcoal text-white border-cq-charcoal font-bold' : 'bg-white text-cq-muted border-cq-border'"
+            >
+              小吃 ({{ snackFoodCount }})
+            </button>
+            <button 
+              type="button"
+              @click="snackFilterType = 'snack'"
+              class="px-2.5 py-1 rounded-full transition border text-[11px] flex-shrink-0"
+              :class="snackFilterType === 'snack' ? 'bg-cq-charcoal text-white border-cq-charcoal font-bold' : 'bg-white text-cq-muted border-cq-border'"
+            >
+              零嘴 ({{ snackCount }})
             </button>
           </div>
 
           <button 
+            type="button"
             @click="openAddSnackModal" 
-            class="px-2.5 py-1 bg-cq-charcoal text-white rounded-xl text-xs font-medium hover:bg-black transition flex items-center space-x-1"
+            class="px-2.5 py-1 bg-cq-charcoal text-white rounded-xl text-xs font-medium hover:bg-black transition flex items-center space-x-1 flex-shrink-0 active:scale-95 shadow-sm"
           >
             <i class="fa-solid fa-plus text-[10px]"></i>
             <span>新增</span>
@@ -1226,10 +1195,14 @@
                 <div class="flex items-start justify-between">
                   <div>
                     <span 
-                      class="text-[10px] font-mono px-1.5 py-0.5 rounded font-medium"
-                      :class="item.type === 'drink' ? 'bg-cq-goldLight text-cq-gold border border-cq-gold/30' : 'bg-cq-wash text-cq-muted border border-cq-border'"
+                      class="text-[10px] font-mono px-1.5 py-0.5 rounded font-medium border"
+                      :class="item.type === 'drink' 
+                        ? 'bg-cq-goldLight text-cq-gold border-cq-gold/30' 
+                        : (item.type === 'snackFood' 
+                          ? 'bg-cq-cinnabarLight text-cq-cinnabar border-cq-cinnabar/30' 
+                          : 'bg-cq-wash text-cq-muted border-cq-border')"
                     >
-                      {{ item.type === 'drink' ? '人氣飲品' : '超商零嘴' }}
+                      {{ item.type === 'drink' ? '飲品' : (item.type === 'snackFood' ? '小吃' : '零嘴') }}
                     </span>
                     <h4 class="font-bold text-cq-charcoal text-sm mt-1" :class="item.isChecked ? 'line-through text-cq-muted' : ''">
                       {{ item.name }}
@@ -1237,6 +1210,7 @@
                   </div>
 
                   <button 
+                    type="button"
                     @click="toggleSnackCheck(item)"
                     class="text-xs px-2.5 py-1 rounded-full font-medium transition flex items-center space-x-1 flex-shrink-0 ml-2"
                     :class="item.isChecked ? 'bg-cq-moss text-white' : 'bg-cq-wash text-cq-muted border border-cq-border'"
@@ -1262,10 +1236,10 @@
               </div>
 
               <div class="flex justify-end space-x-2 text-cq-muted text-xs pt-1 mt-2 border-t border-cq-border/40">
-                <button @click="openEditSnackModal(item)" class="hover:text-cq-charcoal p-0.5" title="編輯">
+                <button type="button" @click="openEditSnackModal(item)" class="hover:text-cq-charcoal p-0.5" title="編輯">
                   <i class="fa-regular fa-pen-to-square"></i>
                 </button>
-                <button @click="deleteSnack(item.id)" class="hover:text-cq-cinnabar p-0.5" title="刪除">
+                <button type="button" @click="deleteSnack(item.id)" class="hover:text-cq-cinnabar p-0.5" title="刪除">
                   <i class="fa-regular fa-trash-can"></i>
                 </button>
               </div>
@@ -1279,8 +1253,9 @@
         <div class="flex justify-between items-center">
           <span class="text-xs text-cq-muted">共 {{ backupSpots.length }} 個候補口袋景點</span>
           <button 
+            type="button"
             @click="openAddBackupModal" 
-            class="px-3 py-1.5 bg-cq-charcoal text-white rounded-xl text-xs font-medium hover:bg-black transition flex items-center space-x-1"
+            class="px-3 py-1.5 bg-cq-charcoal text-white rounded-xl text-xs font-medium hover:bg-black transition flex items-center space-x-1 shadow-sm active:scale-95"
           >
             <i class="fa-solid fa-plus text-[10px]"></i>
             <span>新增景點</span>
@@ -1302,10 +1277,10 @@
                   <h4 class="font-bold text-cq-charcoal text-sm mt-1">{{ spot.name }}</h4>
                 </div>
                 <div class="flex items-center space-x-2 text-cq-muted text-xs">
-                  <button @click="openEditBackupModal(spot)" class="hover:text-cq-charcoal p-0.5" title="編輯">
+                  <button type="button" @click="openEditBackupModal(spot)" class="hover:text-cq-charcoal p-0.5" title="編輯">
                     <i class="fa-regular fa-pen-to-square"></i>
                   </button>
-                  <button @click="deleteBackupSpot(spot.id)" class="hover:text-cq-cinnabar p-0.5" title="刪除">
+                  <button type="button" @click="deleteBackupSpot(spot.id)" class="hover:text-cq-cinnabar p-0.5" title="刪除">
                     <i class="fa-regular fa-trash-can"></i>
                   </button>
                 </div>
@@ -1327,6 +1302,7 @@
   <nav class="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-cq-border py-2 px-4 safe-bottom w-full shadow-lg">
     <div class="max-w-2xl mx-auto grid grid-cols-4 text-center">
       <button 
+        type="button"
         @click="switchTab('itinerary')" 
         class="flex flex-col items-center py-1 transition"
         :class="activeTab === 'itinerary' ? 'text-cq-cinnabar font-bold' : 'text-cq-muted'"
@@ -1336,6 +1312,7 @@
       </button>
 
       <button 
+        type="button"
         @click="switchTab('budget')" 
         class="flex flex-col items-center py-1 transition"
         :class="activeTab === 'budget' ? 'text-cq-cinnabar font-bold' : 'text-cq-muted'"
@@ -1345,6 +1322,7 @@
       </button>
 
       <button 
+        type="button"
         @click="switchTab('flightHotel')" 
         class="flex flex-col items-center py-1 transition"
         :class="activeTab === 'flightHotel' ? 'text-cq-cinnabar font-bold' : 'text-cq-muted'"
@@ -1354,6 +1332,7 @@
       </button>
 
       <button 
+        type="button"
         @click="switchTab('foodBackup')" 
         class="flex flex-col items-center py-1 transition"
         :class="activeTab === 'foodBackup' ? 'text-cq-cinnabar font-bold' : 'text-cq-muted'"
@@ -1364,7 +1343,7 @@
     </div>
   </nav>
 
-  <!-- 彈窗 (0): 編輯旅遊主題名稱與日程標記 Modal -->
+  <!-- 彈窗 (0): 編輯旅遊主題與日程 Modal (原生下拉月曆與自動天數生成) -->
   <div v-if="modalTripTitle.isOpen" class="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
     <div class="bg-white rounded-3xl p-5 w-full max-w-sm border border-cq-border shadow-xl space-y-4">
       <div class="flex justify-between items-center">
@@ -1383,24 +1362,37 @@
           <input 
             type="text" 
             v-model="modalTripTitle.form.title" 
-            @keyup.enter="submitSaveTripTitle"
-            placeholder="例如: 重慶漫遊、東京深秋微旅行、曼谷自由行" 
+            placeholder="例如: 旅遊手帳、重慶漫遊" 
             class="w-full px-3 py-2 rounded-xl border border-cq-border bg-cq-wash text-cq-charcoal font-bold text-sm focus:outline-none focus:border-cq-cinnabar"
           >
         </div>
 
-        <div>
-          <label class="block text-cq-muted mb-1 font-medium">日程與天數標記 (顯示於主題下方)</label>
-          <input 
-            type="text" 
-            v-model="modalTripTitle.form.scheduleNote" 
-            @keyup.enter="submitSaveTripTitle"
-            placeholder="例如: 2026.10.27 - 11.03 · 8天7夜" 
-            class="w-full px-3 py-2 rounded-xl border border-cq-border bg-cq-wash text-cq-charcoal font-mono focus:outline-none focus:border-cq-cinnabar"
-          >
-          <p class="text-[11px] text-cq-muted mt-1">
-            小提示：也可以輸入「{{ daysList.length }} 天日程」或特定起迄日期。
-          </p>
+        <!-- 下拉式日曆日期選擇區 -->
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-cq-muted mb-1 font-medium">啟程日期 (出發日)</label>
+            <input 
+              type="date" 
+              v-model="modalTripTitle.form.startDate" 
+              class="w-full px-2.5 py-2 rounded-xl border border-cq-border bg-cq-wash text-cq-charcoal font-mono text-xs focus:outline-none focus:border-cq-cinnabar"
+            >
+          </div>
+          <div>
+            <label class="block text-cq-muted mb-1 font-medium">回程日期 (結束日)</label>
+            <input 
+              type="date" 
+              v-model="modalTripTitle.form.endDate" 
+              :min="modalTripTitle.form.startDate"
+              class="w-full px-2.5 py-2 rounded-xl border border-cq-border bg-cq-wash text-cq-charcoal font-mono text-xs focus:outline-none focus:border-cq-cinnabar"
+            >
+          </div>
+        </div>
+
+        <!-- 日程預覽卡片 -->
+        <div class="p-2.5 bg-cq-wash/70 rounded-xl border border-cq-border text-xs font-mono space-y-1">
+          <span class="text-[10px] text-cq-muted block">日程預覽與推算</span>
+          <span class="font-bold text-cq-charcoal block">{{ computedSchedulePreview }}</span>
+          <span class="text-[10px] text-cq-moss block font-sans">★ 儲存後將自動生成對應天數與日期行程表</span>
         </div>
 
         <div class="flex space-x-2 pt-2">
@@ -1423,7 +1415,7 @@
     </div>
   </div>
 
-  <!-- 彈窗 (A): 城市切換與即時天氣搜尋 Modal -->
+  <!-- 彈窗 (A): 城市切換與即時天氣 Modal -->
   <div v-if="modalCityWeather.isOpen" class="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
     <div class="bg-white rounded-3xl p-5 w-full max-w-sm border border-cq-border shadow-xl space-y-4">
       <div class="flex justify-between items-center">
@@ -1431,16 +1423,16 @@
           <i class="fa-solid fa-cloud-sun text-cq-moss"></i>
           <span>城市切換與即時天氣</span>
         </h3>
-        <button @click="modalCityWeather.isOpen = false" class="text-cq-muted hover:text-cq-charcoal text-xs">
+        <button type="button" @click="modalCityWeather.isOpen = false" class="text-cq-muted hover:text-cq-charcoal text-xs">
           <i class="fa-solid fa-xmark"></i>
         </button>
       </div>
 
-      <!-- 快速推薦城市 -->
       <div class="space-y-1.5">
         <label class="block text-[11px] text-cq-muted font-medium">常見目的地切換：</label>
         <div class="flex flex-wrap gap-1.5">
           <button 
+            type="button"
             v-for="c in popularCities" 
             :key="c.name"
             @click="selectCity(c)"
@@ -1452,7 +1444,6 @@
         </div>
       </div>
 
-      <!-- 自由搜尋城市 -->
       <div class="space-y-2 pt-1 border-t border-cq-border/60">
         <label class="block text-[11px] text-cq-muted font-medium">搜尋自訂城市：</label>
         <div class="flex space-x-2">
@@ -1464,6 +1455,7 @@
             class="flex-1 px-3 py-2 rounded-xl border border-cq-border bg-cq-wash text-xs text-cq-charcoal"
           >
           <button 
+            type="button"
             @click="searchCityGeocoding" 
             class="px-3 py-2 bg-cq-charcoal text-white rounded-xl text-xs font-medium flex items-center space-x-1"
           >
@@ -1494,7 +1486,7 @@
           <i class="fa-solid fa-coins text-cq-gold"></i>
           <span>幣別設定與即時匯率</span>
         </h3>
-        <button @click="modalCurrency.isOpen = false" class="text-cq-muted hover:text-cq-charcoal text-xs">
+        <button type="button" @click="modalCurrency.isOpen = false" class="text-cq-muted hover:text-cq-charcoal text-xs">
           <i class="fa-solid fa-xmark"></i>
         </button>
       </div>
@@ -1503,6 +1495,7 @@
         <label class="block text-[11px] text-cq-muted font-medium">旅遊目的地幣別：</label>
         <div class="grid grid-cols-3 gap-2">
           <button 
+            type="button"
             v-for="curr in availableCurrencies" 
             :key="curr.code"
             @click="selectCurrency(curr)"
@@ -1527,6 +1520,7 @@
       </div>
 
       <button 
+        type="button"
         @click="fetchLiveExchangeRate(true)" 
         class="w-full py-2.5 bg-cq-charcoal hover:bg-black text-white rounded-xl text-xs font-medium flex items-center justify-center space-x-1.5 transition active:scale-98"
       >
@@ -1536,20 +1530,19 @@
     </div>
   </div>
 
-  <!-- 彈窗 (C): 預算項目 新增/編輯 獨立彈窗 -->
+  <!-- 彈窗 (C): 預算項目 新增/編輯 Modal -->
   <div v-if="modalBudget.isOpen" class="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
     <div class="bg-white rounded-t-3xl sm:rounded-3xl p-5 w-full max-w-sm border border-cq-border shadow-xl space-y-3 max-h-[90vh] overflow-y-auto">
       <div class="flex justify-between items-center">
         <h3 class="font-serif-cq font-bold text-sm text-cq-charcoal">
           {{ modalBudget.isEdit ? '編輯預算項目' : '新增預算項目' }}
         </h3>
-        <button @click="modalBudget.isOpen = false" class="text-cq-muted hover:text-cq-charcoal text-xs">
+        <button type="button" @click="modalBudget.isOpen = false" class="text-cq-muted hover:text-cq-charcoal text-xs">
           <i class="fa-solid fa-xmark"></i>
         </button>
       </div>
 
       <div class="space-y-3 text-xs">
-        <!-- 所屬四大分類 -->
         <div>
           <label class="block text-cq-muted mb-1 font-medium">所屬預算分類</label>
           <select 
@@ -1595,13 +1588,6 @@
           </div>
         </div>
 
-        <div v-if="modalBudget.form.amount > 0" class="p-2 rounded-xl bg-cq-wash text-[11px] font-mono text-cq-muted flex justify-between">
-          <span>折合新台幣：</span>
-          <strong class="text-cq-charcoal font-bold">
-            {{ modalBudget.form.currency === 'TWD' ? 'NT$' + modalBudget.form.amount.toLocaleString() : '≈ NT$' + Math.round(modalBudget.form.amount * exchangeRate).toLocaleString() }}
-          </strong>
-        </div>
-
         <div>
           <label class="block text-cq-muted mb-1 font-medium">備註或說明 (選填)</label>
           <textarea 
@@ -1637,7 +1623,7 @@
     <div class="bg-white rounded-t-3xl sm:rounded-3xl p-5 w-full max-w-sm border border-cq-border shadow-xl space-y-3 max-h-[90vh] overflow-y-auto">
       <div class="flex justify-between items-center">
         <h3 class="font-serif-cq font-bold text-sm text-cq-charcoal">編輯住宿資訊</h3>
-        <button @click="modalStay.isOpen = false" class="text-cq-muted hover:text-cq-charcoal text-xs">
+        <button type="button" @click="modalStay.isOpen = false" class="text-cq-muted hover:text-cq-charcoal text-xs">
           <i class="fa-solid fa-xmark"></i>
         </button>
       </div>
@@ -1669,6 +1655,21 @@
           <label class="block text-cq-muted mb-1 font-medium">房型或配備亮點</label>
           <input type="text" v-model="modalStay.form.roomType" class="w-full px-3 py-2 rounded-xl border border-cq-border bg-cq-wash text-cq-charcoal">
         </div>
+
+        <!-- 重要門禁密碼卡/通行密碼欄位 -->
+        <div class="p-3 bg-rose-50/80 rounded-xl border border-rose-300 space-y-1.5">
+          <label class="block text-rose-900 font-bold text-xs flex items-center space-x-1.5">
+            <i class="fa-solid fa-key text-rose-600"></i>
+            <span>重要門禁：大樓門禁密碼卡 / 通行密碼</span>
+          </label>
+          <input 
+            type="text" 
+            v-model="modalStay.form.accessCode" 
+            placeholder="例如: 大門 #8821# / 房間密碼 528991" 
+            class="w-full px-3 py-2 rounded-xl border border-rose-300 bg-white text-rose-900 font-mono font-bold text-xs focus:outline-none focus:border-rose-500"
+          >
+        </div>
+
         <div>
           <label class="block text-cq-muted mb-1 font-medium">備註說明</label>
           <textarea v-model="modalStay.form.notes" rows="2" class="w-full px-3 py-2 rounded-xl border border-cq-border bg-cq-wash text-cq-charcoal"></textarea>
@@ -1687,13 +1688,13 @@
               <option value="info">資訊藍 (提示)</option>
             </select>
           </div>
-          <input type="text" v-model="modalStay.form.alertTitle" placeholder="提醒標題 (例如: 入住時間提醒)" class="w-full px-2.5 py-1.5 rounded-lg border border-amber-300 bg-white text-xs text-amber-900 font-medium">
-          <textarea v-model="modalStay.form.alertText" rows="2" placeholder="提醒內文 (例如: 需在下午 14:00 後入住，前台有行李寄存服務...)" class="w-full px-2.5 py-1.5 rounded-lg border border-amber-300 bg-white text-xs text-amber-900"></textarea>
+          <input type="text" v-model="modalStay.form.alertTitle" placeholder="提醒標題" class="w-full px-2.5 py-1.5 rounded-lg border border-amber-300 bg-white text-xs text-amber-900 font-medium">
+          <textarea v-model="modalStay.form.alertText" rows="2" placeholder="提醒詳細內文..." class="w-full px-2.5 py-1.5 rounded-lg border border-amber-300 bg-white text-xs text-amber-900"></textarea>
         </div>
 
         <div class="flex space-x-2 pt-2">
-          <button @click="modalStay.isOpen = false" class="flex-1 py-2.5 rounded-xl border border-cq-border text-cq-muted font-medium">取消</button>
-          <button @click="submitSaveStay" class="flex-1 py-2.5 rounded-xl bg-cq-charcoal text-white font-medium">儲存住宿</button>
+          <button type="button" @click="modalStay.isOpen = false" class="flex-1 py-2.5 rounded-xl border border-cq-border text-cq-muted font-medium">取消</button>
+          <button type="button" @click="submitSaveStay" class="flex-1 py-2.5 rounded-xl bg-cq-charcoal text-white font-medium">儲存住宿</button>
         </div>
       </div>
     </div>
@@ -1704,7 +1705,7 @@
     <div class="bg-white rounded-t-3xl sm:rounded-3xl p-5 w-full max-w-sm border border-cq-border shadow-xl space-y-3 max-h-[90vh] overflow-y-auto">
       <div class="flex justify-between items-center">
         <h3 class="font-serif-cq font-bold text-sm text-cq-charcoal">編輯機票航程</h3>
-        <button @click="modalFlight.isOpen = false" class="text-cq-muted hover:text-cq-charcoal text-xs">
+        <button type="button" @click="modalFlight.isOpen = false" class="text-cq-muted hover:text-cq-charcoal text-xs">
           <i class="fa-solid fa-xmark"></i>
         </button>
       </div>
@@ -1729,7 +1730,7 @@
         <!-- 去程航段 -->
         <div class="p-2.5 bg-cq-wash/70 rounded-xl border border-cq-border space-y-2">
           <span class="font-bold text-cq-charcoal block">去程設定</span>
-          <input type="text" v-model="modalFlight.form.outboundTitle" placeholder="去程標題 (如: 去程航班 · 2026/10/27)" class="w-full px-2.5 py-1.5 rounded-lg border border-cq-border bg-white text-xs font-serif-cq">
+          <input type="text" v-model="modalFlight.form.outboundTitle" placeholder="去程標題" class="w-full px-2.5 py-1.5 rounded-lg border border-cq-border bg-white text-xs font-serif-cq">
           
           <div class="grid grid-cols-3 gap-1.5">
             <input type="text" v-model="modalFlight.form.outboundLeg1DepTime" placeholder="16:30" class="px-2 py-1 rounded border bg-white font-mono text-[11px]">
@@ -1752,7 +1753,7 @@
         <!-- 回程航段 -->
         <div class="p-2.5 bg-cq-wash/70 rounded-xl border border-cq-border space-y-2">
           <span class="font-bold text-cq-charcoal block">回程設定</span>
-          <input type="text" v-model="modalFlight.form.inboundTitle" placeholder="回程標題 (如: 回程航班 · 2026/11/03)" class="w-full px-2.5 py-1.5 rounded-lg border border-cq-border bg-white text-xs font-serif-cq">
+          <input type="text" v-model="modalFlight.form.inboundTitle" placeholder="回程標題" class="w-full px-2.5 py-1.5 rounded-lg border border-cq-border bg-white text-xs font-serif-cq">
           
           <div class="grid grid-cols-3 gap-1.5">
             <input type="text" v-model="modalFlight.form.inboundLeg1DepTime" placeholder="08:40" class="px-2 py-1 rounded border bg-white font-mono text-[11px]">
@@ -1785,13 +1786,13 @@
               <option value="info">資訊藍 (提示)</option>
             </select>
           </div>
-          <input type="text" v-model="modalFlight.form.alertTitle" placeholder="提醒標題 (例如: 去程不同航廈轉機！)" class="w-full px-2.5 py-1.5 rounded-lg border border-amber-300 bg-white text-xs text-amber-900 font-medium">
-          <textarea v-model="modalFlight.form.alertText" rows="2" placeholder="提醒內文 (例如: 抵達香港 T1 後，需步行前往 T2 登機閘口...)" class="w-full px-2.5 py-1.5 rounded-lg border border-amber-300 bg-white text-xs text-amber-900"></textarea>
+          <input type="text" v-model="modalFlight.form.alertTitle" placeholder="提醒標題" class="w-full px-2.5 py-1.5 rounded-lg border border-amber-300 bg-white text-xs text-amber-900 font-medium">
+          <textarea v-model="modalFlight.form.alertText" rows="2" placeholder="提醒詳細內文..." class="w-full px-2.5 py-1.5 rounded-lg border border-amber-300 bg-white text-xs text-amber-900"></textarea>
         </div>
 
         <div class="flex space-x-2 pt-2">
-          <button @click="modalFlight.isOpen = false" class="flex-1 py-2.5 rounded-xl border border-cq-border text-cq-muted font-medium">取消</button>
-          <button @click="submitSaveFlight" class="flex-1 py-2.5 rounded-xl bg-cq-charcoal text-white font-medium">儲存機票</button>
+          <button type="button" @click="modalFlight.isOpen = false" class="flex-1 py-2.5 rounded-xl border border-cq-border text-cq-muted font-medium">取消</button>
+          <button type="button" @click="submitSaveFlight" class="flex-1 py-2.5 rounded-xl bg-cq-charcoal text-white font-medium">儲存機票</button>
         </div>
       </div>
     </div>
@@ -1802,7 +1803,7 @@
     <div class="bg-white rounded-t-3xl sm:rounded-3xl p-5 w-full max-w-sm border border-cq-border shadow-xl space-y-3 max-h-[90vh] overflow-y-auto">
       <div class="flex justify-between items-center">
         <h3 class="font-serif-cq font-bold text-sm text-cq-charcoal">編輯旅平險 + 不便險</h3>
-        <button @click="modalInsurance.isOpen = false" class="text-cq-muted hover:text-cq-charcoal text-xs">
+        <button type="button" @click="modalInsurance.isOpen = false" class="text-cq-muted hover:text-cq-charcoal text-xs">
           <i class="fa-solid fa-xmark"></i>
         </button>
       </div>
@@ -1814,7 +1815,7 @@
             <input type="text" v-model="modalInsurance.form.companyName" placeholder="第一金人壽" class="w-full px-3 py-2 rounded-xl border border-cq-border bg-cq-wash text-cq-charcoal font-medium">
           </div>
           <div>
-            <label class="block text-cq-muted mb-1 font-medium">標記徽章 (如: 線上投保)</label>
+            <label class="block text-cq-muted mb-1 font-medium">標記徽章</label>
             <input type="text" v-model="modalInsurance.form.badgeText" placeholder="線上投保" class="w-full px-3 py-2 rounded-xl border border-cq-border bg-cq-wash text-cq-charcoal font-mono">
           </div>
         </div>
@@ -1852,13 +1853,13 @@
               <option value="info">資訊藍 (提示)</option>
             </select>
           </div>
-          <input type="text" v-model="modalInsurance.form.alertTitle" placeholder="提醒標題 (例如: 務必於出發前完成投保)" class="w-full px-2.5 py-1.5 rounded-lg border border-amber-300 bg-white text-xs text-amber-900 font-medium">
-          <textarea v-model="modalInsurance.form.alertText" rows="2" placeholder="提醒內文 (例如: 保障生效時間請設定從出門踏出家門至回國返家...)" class="w-full px-2.5 py-1.5 rounded-lg border border-amber-300 bg-white text-xs text-amber-900"></textarea>
+          <input type="text" v-model="modalInsurance.form.alertTitle" placeholder="提醒標題" class="w-full px-2.5 py-1.5 rounded-lg border border-amber-300 bg-white text-xs text-amber-900 font-medium">
+          <textarea v-model="modalInsurance.form.alertText" rows="2" placeholder="提醒詳細內文..." class="w-full px-2.5 py-1.5 rounded-lg border border-amber-300 bg-white text-xs text-amber-900"></textarea>
         </div>
 
         <div class="flex space-x-2 pt-2">
-          <button @click="modalInsurance.isOpen = false" class="flex-1 py-2.5 rounded-xl border border-cq-border text-cq-muted font-medium">取消</button>
-          <button @click="submitSaveInsurance" class="flex-1 py-2.5 rounded-xl bg-cq-charcoal text-white font-medium">儲存保險</button>
+          <button type="button" @click="modalInsurance.isOpen = false" class="flex-1 py-2.5 rounded-xl border border-cq-border text-cq-muted font-medium">取消</button>
+          <button type="button" @click="submitSaveInsurance" class="flex-1 py-2.5 rounded-xl bg-cq-charcoal text-white font-medium">儲存保險</button>
         </div>
       </div>
     </div>
@@ -1869,7 +1870,7 @@
     <div class="bg-white rounded-t-3xl sm:rounded-3xl p-5 w-full max-w-sm border border-cq-border shadow-xl space-y-3 max-h-[90vh] overflow-y-auto">
       <div class="flex justify-between items-center">
         <h3 class="font-serif-cq font-bold text-sm text-cq-charcoal">編輯網路漫遊方案</h3>
-        <button @click="modalRoaming.isOpen = false" class="text-cq-muted hover:text-cq-charcoal text-xs">
+        <button type="button" @click="modalRoaming.isOpen = false" class="text-cq-muted hover:text-cq-charcoal text-xs">
           <i class="fa-solid fa-xmark"></i>
         </button>
       </div>
@@ -1877,28 +1878,28 @@
       <div class="space-y-2.5 text-xs">
         <div class="grid grid-cols-2 gap-2">
           <div>
-            <label class="block text-cq-muted mb-1 font-medium">電信/廠商 (如: KKday / 台哥大)</label>
-            <input type="text" v-model="modalRoaming.form.providerName" placeholder="KKday / 中華電信 / 台哥大" class="w-full px-3 py-2 rounded-xl border border-cq-border bg-cq-wash text-cq-charcoal font-medium">
+            <label class="block text-cq-muted mb-1 font-medium">電信/廠商</label>
+            <input type="text" v-model="modalRoaming.form.providerName" placeholder="KKday / 台灣大哥大" class="w-full px-3 py-2 rounded-xl border border-cq-border bg-cq-wash text-cq-charcoal font-medium">
           </div>
           <div>
-            <label class="block text-cq-muted mb-1 font-medium">特性標籤 (如: 免翻牆 / 中港通用)</label>
+            <label class="block text-cq-muted mb-1 font-medium">特性標籤</label>
             <input type="text" v-model="modalRoaming.form.tagText" placeholder="免翻牆 / 實體卡" class="w-full px-3 py-2 rounded-xl border border-cq-border bg-cq-wash text-cq-charcoal font-mono">
           </div>
         </div>
 
         <div>
           <label class="block text-cq-muted mb-1 font-medium">方案名稱</label>
-          <input type="text" v-model="modalRoaming.form.planName" placeholder="中港澳 5G 高速 eSIM / 8日 8GB 漫遊卡" class="w-full px-3 py-2 rounded-xl border border-cq-border bg-cq-wash text-cq-charcoal font-medium">
+          <input type="text" v-model="modalRoaming.form.planName" placeholder="中港澳 5G 高速 eSIM" class="w-full px-3 py-2 rounded-xl border border-cq-border bg-cq-wash text-cq-charcoal font-medium">
         </div>
 
         <div>
           <label class="block text-cq-muted mb-1 font-medium">規格與特性內容</label>
-          <textarea v-model="modalRoaming.form.specDesc" rows="3" placeholder="支援 LINE/FB/IG 直接使用，不需開 VPN..." class="w-full px-3 py-2 rounded-xl border border-cq-border bg-cq-wash text-cq-charcoal"></textarea>
+          <textarea v-model="modalRoaming.form.specDesc" rows="3" class="w-full px-3 py-2 rounded-xl border border-cq-border bg-cq-wash text-cq-charcoal"></textarea>
         </div>
 
         <div>
           <label class="block text-cq-muted mb-1 font-medium">開通指引 / 簡訊指令</label>
-          <input type="text" v-model="modalRoaming.form.instructionText" placeholder="例如: 抵達後插卡開啟漫遊，或發送簡訊「DA232」開通" class="w-full px-3 py-2 rounded-xl border border-cq-border bg-cq-wash text-cq-charcoal">
+          <input type="text" v-model="modalRoaming.form.instructionText" placeholder="開通說明..." class="w-full px-3 py-2 rounded-xl border border-cq-border bg-cq-wash text-cq-charcoal">
         </div>
 
         <div>
@@ -1919,13 +1920,13 @@
               <option value="info">資訊藍 (提示)</option>
             </select>
           </div>
-          <input type="text" v-model="modalRoaming.form.alertTitle" placeholder="提醒標題 (例如: 抵達後需開啟「數據漫遊」)" class="w-full px-2.5 py-1.5 rounded-lg border border-amber-300 bg-white text-xs text-amber-900 font-medium">
-          <textarea v-model="modalRoaming.form.alertText" rows="2" placeholder="提醒內文 (例如: 台灣門號請先關閉漫遊，換卡後開啟數據漫遊...)" class="w-full px-2.5 py-1.5 rounded-lg border border-amber-300 bg-white text-xs text-amber-900"></textarea>
+          <input type="text" v-model="modalRoaming.form.alertTitle" placeholder="提醒標題" class="w-full px-2.5 py-1.5 rounded-lg border border-amber-300 bg-white text-xs text-amber-900 font-medium">
+          <textarea v-model="modalRoaming.form.alertText" rows="2" placeholder="提醒詳細內文..." class="w-full px-2.5 py-1.5 rounded-lg border border-amber-300 bg-white text-xs text-amber-900"></textarea>
         </div>
 
         <div class="flex space-x-2 pt-2">
-          <button @click="modalRoaming.isOpen = false" class="flex-1 py-2.5 rounded-xl border border-cq-border text-cq-muted font-medium">取消</button>
-          <button @click="submitSaveRoaming" class="flex-1 py-2.5 rounded-xl bg-cq-charcoal text-white font-medium">儲存漫遊</button>
+          <button type="button" @click="modalRoaming.isOpen = false" class="flex-1 py-2.5 rounded-xl border border-cq-border text-cq-muted font-medium">取消</button>
+          <button type="button" @click="submitSaveRoaming" class="flex-1 py-2.5 rounded-xl bg-cq-charcoal text-white font-medium">儲存漫遊</button>
         </div>
       </div>
     </div>
@@ -1938,7 +1939,7 @@
         <h3 class="font-serif-cq font-bold text-sm text-cq-charcoal">
           {{ modalDay.isEdit ? '編輯日程資訊' : '新增日程天數' }}
         </h3>
-        <button @click="modalDay.isOpen = false" class="text-cq-muted hover:text-cq-charcoal text-xs">
+        <button type="button" @click="modalDay.isOpen = false" class="text-cq-muted hover:text-cq-charcoal text-xs">
           <i class="fa-solid fa-xmark"></i>
         </button>
       </div>
@@ -1977,8 +1978,8 @@
         </div>
 
         <div class="flex space-x-2 pt-2">
-          <button @click="modalDay.isOpen = false" class="flex-1 py-2.5 rounded-xl border border-cq-border text-cq-muted font-medium">取消</button>
-          <button @click="submitSaveDay" class="flex-1 py-2.5 rounded-xl bg-cq-charcoal text-white font-medium">確認儲存</button>
+          <button type="button" @click="modalDay.isOpen = false" class="flex-1 py-2.5 rounded-xl border border-cq-border text-cq-muted font-medium">取消</button>
+          <button type="button" @click="submitSaveDay" class="flex-1 py-2.5 rounded-xl bg-cq-charcoal text-white font-medium">確認儲存</button>
         </div>
       </div>
     </div>
@@ -1991,7 +1992,7 @@
         <h3 class="font-serif-cq font-bold text-sm text-cq-charcoal">
           {{ modalEvent.isEdit ? '編輯行程站點' : '新增行程站點 (' + (currentDay ? currentDay.dayCode : '') + ')' }}
         </h3>
-        <button @click="modalEvent.isOpen = false" class="text-cq-muted hover:text-cq-charcoal text-xs">
+        <button type="button" @click="modalEvent.isOpen = false" class="text-cq-muted hover:text-cq-charcoal text-xs">
           <i class="fa-solid fa-xmark"></i>
         </button>
       </div>
@@ -2028,7 +2029,7 @@
 
         <!-- 照片上傳區 -->
         <div>
-          <label class="block text-cq-muted mb-1 font-medium">景點或活動照片 (相簿選取 · 自動輕量壓縮)</label>
+          <label class="block text-cq-muted mb-1 font-medium">景點或活動照片 (自動輕量壓縮)</label>
           <div class="flex items-center space-x-3">
             <div v-if="modalEvent.form.image" class="w-16 h-16 rounded-xl border border-cq-border overflow-hidden relative flex-shrink-0">
               <img :src="modalEvent.form.image" class="w-full h-full object-cover">
@@ -2049,7 +2050,7 @@
           </div>
         </div>
 
-        <!-- 醒目提醒事項設定區 -->
+        <!-- 醒目提醒設定區 -->
         <div class="p-3 bg-amber-50/70 rounded-xl border border-amber-300/80 space-y-2">
           <div class="flex items-center justify-between">
             <span class="font-bold text-amber-900 flex items-center space-x-1.5">
@@ -2072,32 +2073,32 @@
           <textarea 
             v-model="modalEvent.form.alertText" 
             rows="2" 
-            placeholder="提醒詳細內文 (例如: 抵達後請注意登機門號，需預留30分鐘步行時間...)" 
+            placeholder="提醒詳細內文..." 
             class="w-full px-2.5 py-1.5 rounded-lg border border-amber-300 bg-white text-xs text-amber-900"
           ></textarea>
         </div>
 
         <div>
           <label class="block text-cq-muted mb-1 font-medium">備註與遊玩亮點</label>
-          <textarea v-model="modalEvent.form.notes" rows="2" placeholder="交通路線、最佳拍照機位或參觀重點..." class="w-full px-3 py-2 rounded-xl border border-cq-border bg-cq-wash text-cq-charcoal"></textarea>
+          <textarea v-model="modalEvent.form.notes" rows="2" placeholder="交通路線或參觀重點..." class="w-full px-3 py-2 rounded-xl border border-cq-border bg-cq-wash text-cq-charcoal"></textarea>
         </div>
 
         <div class="flex space-x-2 pt-2">
-          <button @click="modalEvent.isOpen = false" class="flex-1 py-2.5 rounded-xl border border-cq-border text-cq-muted font-medium">取消</button>
-          <button @click="submitSaveEvent" class="flex-1 py-2.5 rounded-xl bg-cq-charcoal text-white font-medium">儲存站點</button>
+          <button type="button" @click="modalEvent.isOpen = false" class="flex-1 py-2.5 rounded-xl border border-cq-border text-cq-muted font-medium">取消</button>
+          <button type="button" @click="submitSaveEvent" class="flex-1 py-2.5 rounded-xl bg-cq-charcoal text-white font-medium">儲存站點</button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- 彈窗 (3): 美食 新增/編輯 獨立彈窗 -->
+  <!-- 彈窗 (3): 推薦餐廳 新增/編輯 彈窗 -->
   <div v-if="modalFood.isOpen" class="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
     <div class="bg-white rounded-t-3xl sm:rounded-3xl p-5 w-full max-w-sm border border-cq-border shadow-xl space-y-3 max-h-[90vh] overflow-y-auto">
       <div class="flex justify-between items-center">
         <h3 class="font-serif-cq font-bold text-sm text-cq-charcoal">
-          {{ modalFood.isEdit ? '編輯美食項目' : '新增必吃美食' }}
+          {{ modalFood.isEdit ? '編輯餐廳項目' : '新增推薦餐廳' }}
         </h3>
-        <button @click="modalFood.isOpen = false" class="text-cq-muted hover:text-cq-charcoal text-xs">
+        <button type="button" @click="modalFood.isOpen = false" class="text-cq-muted hover:text-cq-charcoal text-xs">
           <i class="fa-solid fa-xmark"></i>
         </button>
       </div>
@@ -2127,6 +2128,16 @@
             <label class="block text-cq-muted mb-1 font-medium">預估費用 ({{ currentCurrency.symbol }} {{ currentCurrency.code }})</label>
             <input type="number" v-model.number="modalFood.form.priceCny" placeholder="80" class="w-full px-3 py-2 rounded-xl border border-cq-border bg-cq-wash font-mono font-bold text-cq-charcoal">
           </div>
+        </div>
+
+        <div>
+          <label class="block text-cq-muted mb-1 font-medium">購買 / 官網連結 URL (團購/商品連結)</label>
+          <input 
+            type="text" 
+            v-model="modalFood.form.linkUrl" 
+            placeholder="https://... (有填寫將顯示「線上團購」按鈕)" 
+            class="w-full px-3 py-2 rounded-xl border border-cq-border bg-cq-wash text-cq-charcoal font-mono text-xs focus:outline-none focus:border-cq-cinnabar"
+          >
         </div>
 
         <!-- 相簿照片上傳 -->
@@ -2165,14 +2176,14 @@
     </div>
   </div>
 
-  <!-- 彈窗 (4): 零嘴飲品 新增/編輯 獨立彈窗 -->
+  <!-- 彈窗 (4): 飲品小吃 新增/編輯 彈窗 -->
   <div v-if="modalSnack.isOpen" class="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
     <div class="bg-white rounded-t-3xl sm:rounded-3xl p-5 w-full max-w-sm border border-cq-border shadow-xl space-y-3 max-h-[90vh] overflow-y-auto">
       <div class="flex justify-between items-center">
         <h3 class="font-serif-cq font-bold text-sm text-cq-charcoal">
-          {{ modalSnack.isEdit ? '編輯零嘴飲品' : '新增零嘴飲品' }}
+          {{ modalSnack.isEdit ? '編輯飲品小吃' : '新增飲品小吃' }}
         </h3>
-        <button @click="modalSnack.isOpen = false" class="text-cq-muted hover:text-cq-charcoal text-xs">
+        <button type="button" @click="modalSnack.isOpen = false" class="text-cq-muted hover:text-cq-charcoal text-xs">
           <i class="fa-solid fa-xmark"></i>
         </button>
       </div>
@@ -2180,20 +2191,21 @@
       <div class="space-y-3 text-xs">
         <div>
           <label class="block text-cq-muted mb-1 font-medium">品牌或名稱</label>
-          <input type="text" v-model="modalSnack.form.name" placeholder="例如: 茶顏悅色" class="w-full px-3 py-2 rounded-xl border border-cq-border bg-cq-wash text-cq-charcoal font-medium">
+          <input type="text" v-model="modalSnack.form.name" placeholder="例如: 茶顏悅色 / 重慶烤苕皮" class="w-full px-3 py-2 rounded-xl border border-cq-border bg-cq-wash text-cq-charcoal font-medium">
         </div>
 
         <div>
-          <label class="block text-cq-muted mb-1 font-medium">種類</label>
+          <label class="block text-cq-muted mb-1 font-medium">分類類型</label>
           <select v-model="modalSnack.form.type" class="w-full px-3 py-2 rounded-xl border border-cq-border bg-cq-wash text-cq-charcoal font-medium">
-            <option value="drink">人氣飲品</option>
-            <option value="snack">超商零嘴</option>
+            <option value="drink">飲品 (人氣手搖/茶飲)</option>
+            <option value="snackFood">小吃 (特色排隊/街頭小吃)</option>
+            <option value="snack">零嘴 (超商/袋裝零嘴)</option>
           </select>
         </div>
 
-        <div v-if="modalSnack.form.type === 'drink'">
+        <div>
           <label class="block text-cq-muted mb-1 font-medium">必點推薦品項 (以逗號或頓號分隔)</label>
-          <input type="text" v-model="modalSnack.form.recommendationsStr" placeholder="幽蘭拿鐵、聲聲烏龍" class="w-full px-3 py-2 rounded-xl border border-cq-border bg-cq-wash text-cq-charcoal">
+          <input type="text" v-model="modalSnack.form.recommendationsStr" placeholder="幽蘭拿鐵、聲聲烏龍 或 招牌烤苕皮" class="w-full px-3 py-2 rounded-xl border border-cq-border bg-cq-wash text-cq-charcoal">
         </div>
 
         <div>
@@ -2216,7 +2228,7 @@
         <h3 class="font-serif-cq font-bold text-sm text-cq-charcoal">
           {{ modalBackup.isEdit ? '編輯備用景點' : '新增備用景點' }}
         </h3>
-        <button @click="modalBackup.isOpen = false" class="text-cq-muted hover:text-cq-charcoal text-xs">
+        <button type="button" @click="modalBackup.isOpen = false" class="text-cq-muted hover:text-cq-charcoal text-xs">
           <i class="fa-solid fa-xmark"></i>
         </button>
       </div>
@@ -2295,10 +2307,10 @@
 
   // 預算四大核心分類常數
   const CATEGORY_KEYS = {
-    FIXED: 'fixed',       // 固定大項開銷
-    TICKET: 'ticket',     // 行程門票與體驗項目
-    FOOD: 'food',         // 餐食預估費用
-    PERSONAL: 'personal'  // 個人限定項目
+    FIXED: 'fixed',
+    TICKET: 'ticket',
+    FOOD: 'food',
+    PERSONAL: 'personal'
   };
 
   const startApp = () => {
@@ -2315,11 +2327,49 @@
         const foodSubTab = ref('food');
         const selectedDayIndex = ref(0);
 
-        // ==================== 0. 旅遊主題與日程標記自訂 ====================
-        const LOCAL_KEY_TRIP_META = 'cq_trip_meta_v1';
+        // ==================== 0. 行程天數列表 (前置宣告避免依賴錯誤) ====================
+        const daysList = ref([
+          {
+            dayCode: 'D1',
+            dateShort: '10/27',
+            fullDate: '2026/10/27',
+            weekday: '週二',
+            title: '抵達山城 · 旅程啟程',
+            subtitle: '初訪霧都，展開精彩漫步',
+            events: []
+          },
+          {
+            dayCode: 'D2',
+            dateShort: '10/28',
+            fullDate: '2026/10/28',
+            weekday: '週三',
+            title: '老街巷弄探索',
+            subtitle: '自由設定當日亮點與路線',
+            events: []
+          },
+          {
+            dayCode: 'D3',
+            dateShort: '10/29',
+            fullDate: '2026/10/29',
+            weekday: '週四',
+            title: '兩江夜景與美食巡禮',
+            subtitle: '自由設定當日亮點與路線',
+            events: []
+          }
+        ]);
+
+        const currentDay = computed(() => {
+          if (daysList.value.length === 0) return null;
+          return daysList.value[selectedDayIndex.value] || daysList.value[0];
+        });
+
+        // ==================== 1. 旅遊主題與日程標記自訂 ====================
+        const LOCAL_KEY_TRIP_META = 'cq_trip_meta_v2';
         let initialMeta = {
-          title: '重慶漫遊',
-          scheduleNote: '2026.10.27 起程 · 8天7夜'
+          title: '旅遊手帳',
+          startDate: '2026-10-27',
+          endDate: '2026-11-03',
+          scheduleNote: '2026.10.27 - 11.03 · 8天7夜'
         };
 
         try {
@@ -2328,8 +2378,10 @@
             const parsedMeta = JSON.parse(cachedMeta);
             if (parsedMeta && typeof parsedMeta.title === 'string' && parsedMeta.title.trim()) {
               initialMeta = {
-                title: parsedMeta.title.trim(),
-                scheduleNote: parsedMeta.scheduleNote ? parsedMeta.scheduleNote.trim() : '2026.10.27 起程 · 8天7夜'
+                title: parsedMeta.title.trim() || '旅遊手帳',
+                startDate: parsedMeta.startDate || '2026-10-27',
+                endDate: parsedMeta.endDate || '2026-11-03',
+                scheduleNote: parsedMeta.scheduleNote || '2026.10.27 - 11.03 · 8天7夜'
               };
             }
           }
@@ -2339,6 +2391,8 @@
 
         const tripMeta = reactive({
           title: initialMeta.title,
+          startDate: initialMeta.startDate,
+          endDate: initialMeta.endDate,
           scheduleNote: initialMeta.scheduleNote
         });
 
@@ -2346,30 +2400,107 @@
           isOpen: false,
           form: {
             title: '',
-            scheduleNote: ''
+            startDate: '',
+            endDate: ''
           }
         });
 
+        // 日程預覽推算
+        const computedSchedulePreview = computed(() => {
+          const start = modalTripTitle.form.startDate;
+          const end = modalTripTitle.form.endDate;
+          if (!start || !end) return '請先選擇起訖日期';
+          const s = new Date(start);
+          const e = new Date(end);
+          const diffMs = e.getTime() - s.getTime();
+          if (diffMs < 0) return '回程不可早於啟程日';
+          const days = Math.round(diffMs / (1000 * 60 * 60 * 24)) + 1;
+          const nights = Math.max(0, days - 1);
+          const sFmt = start.replace(/-/g, '.');
+          const eFmt = end.replace(/-/g, '.');
+          return `${sFmt} - ${eFmt} · ${days}天${nights}夜`;
+        });
+
         const openEditTripTitleModal = () => {
-          modalTripTitle.form.title = tripMeta.title || '';
-          modalTripTitle.form.scheduleNote = tripMeta.scheduleNote || '';
+          modalTripTitle.form.title = tripMeta.title || '旅遊手帳';
+          modalTripTitle.form.startDate = tripMeta.startDate || '2026-10-27';
+          modalTripTitle.form.endDate = tripMeta.endDate || '2026-11-03';
           modalTripTitle.isOpen = true;
         };
 
-        const submitSaveTripTitle = () => {
-          const newTitle = (modalTripTitle.form.title || '').trim();
-          if (!newTitle) {
-            showToast('請輸入旅遊主題名稱');
-            return;
+        // 依據選取的日期區間自動生成天數列表
+        const generateDaysFromDates = (startStr, endStr) => {
+          if (!startStr || !endStr) return;
+          const sDate = new Date(startStr);
+          const eDate = new Date(endStr);
+          if (eDate.getTime() < sDate.getTime()) return;
+
+          const weekdaysArr = ['週日', '週一', '週二', '週三', '週四', '週五', '週六'];
+          const existingEventsMap = {};
+          daysList.value.forEach((d, idx) => {
+            if (d.events && d.events.length > 0) {
+              existingEventsMap[idx] = d.events;
+            }
+          });
+
+          const newDays = [];
+          const cur = new Date(sDate);
+          let dayIndex = 1;
+
+          while (cur <= eDate) {
+            const y = cur.getFullYear();
+            const m = String(cur.getMonth() + 1).padStart(2, '0');
+            const d = String(cur.getDate()).padStart(2, '0');
+            const w = weekdaysArr[cur.getDay()];
+            const dCode = `D${dayIndex}`;
+
+            const oldDay = daysList.value[dayIndex - 1];
+            newDays.push({
+              dayCode: dCode,
+              dateShort: `${Number(m)}/${Number(d)}`,
+              fullDate: `${y}/${m}/${d}`,
+              weekday: w,
+              title: (oldDay && oldDay.title) ? oldDay.title : (dayIndex === 1 ? '啟程抵達 · 展開漫步' : `第 ${dayIndex} 天精彩探索`),
+              subtitle: (oldDay && oldDay.subtitle) ? oldDay.subtitle : '自由探索當地風光與特色景點',
+              events: existingEventsMap[dayIndex - 1] || []
+            });
+
+            cur.setDate(cur.getDate() + 1);
+            dayIndex++;
           }
-          const newNote = (modalTripTitle.form.scheduleNote || '').trim() || `${daysList.value.length} 天日程`;
-          
+
+          daysList.value = newDays;
+          if (selectedDayIndex.value >= newDays.length) {
+            selectedDayIndex.value = Math.max(0, newDays.length - 1);
+          }
+        };
+
+        const submitSaveTripTitle = () => {
+          const newTitle = (modalTripTitle.form.title || '').trim() || '旅遊手帳';
+          const start = modalTripTitle.form.startDate;
+          const end = modalTripTitle.form.endDate;
+
           tripMeta.title = newTitle;
-          tripMeta.scheduleNote = newNote;
+          tripMeta.startDate = start;
+          tripMeta.endDate = end;
+
+          if (start && end) {
+            const s = new Date(start);
+            const e = new Date(end);
+            const diffMs = e.getTime() - s.getTime();
+            if (diffMs >= 0) {
+              const days = Math.round(diffMs / (1000 * 60 * 60 * 24)) + 1;
+              const nights = Math.max(0, days - 1);
+              tripMeta.scheduleNote = `${start.replace(/-/g, '.')} - ${end.replace(/-/g, '.')} · ${days}天${nights}夜`;
+              generateDaysFromDates(start, end);
+            }
+          }
 
           try {
             localStorage.setItem(LOCAL_KEY_TRIP_META, JSON.stringify({
               title: tripMeta.title,
+              startDate: tripMeta.startDate,
+              endDate: tripMeta.endDate,
               scheduleNote: tripMeta.scheduleNote
             }));
           } catch (e) {
@@ -2378,7 +2509,7 @@
 
           document.title = `${newTitle} · 霧都漫步手帳 2026`;
           modalTripTitle.isOpen = false;
-          showToast('旅遊主題與日程已成功更新！');
+          showToast('旅遊主題、日程與行程表已自動同步更新！');
         };
 
         watch(() => tripMeta.title, (newTitle) => {
@@ -2424,7 +2555,7 @@
           });
         };
 
-        // ==================== 1. 城市與即時天氣系統 ====================
+        // ==================== 2. 城市與即時天氣系統 ====================
         const popularCities = [
           { name: '重慶', lat: 29.5575, lng: 106.5770, currency: 'CNY' },
           { name: '成都', lat: 30.5728, lng: 104.0668, currency: 'CNY' },
@@ -2507,7 +2638,7 @@
           }
         };
 
-        // ==================== 2. 貨幣與即時匯率系統 ====================
+        // ==================== 3. 貨幣與即時匯率系統 ====================
         const availableCurrencies = [
           { code: 'CNY', symbol: '¥', name: '人民幣' },
           { code: 'JPY', symbol: '¥', name: '日圓' },
@@ -2549,7 +2680,7 @@
           }
         };
 
-        // ==================== 3. 預算系統 (固定大項預設保險與漫遊，門票與餐食與個人限定空白) ====================
+        // ==================== 4. 預算系統 ====================
         const budgetItems = ref([
           {
             id: 'b-init-1',
@@ -2664,11 +2795,6 @@
           }, 0);
         };
 
-        const getCategoryTotalDest = (cat) => {
-          const twdTotal = getCategoryTotalTwd(cat);
-          return exchangeRate.value > 0 ? (twdTotal / exchangeRate.value) : 0;
-        };
-
         const totalBudgetTwd = computed(() => {
           return Math.round(
             getCategoryTotalTwd(CATEGORY_KEYS.FIXED) +
@@ -2682,16 +2808,17 @@
           return exchangeRate.value > 0 ? (totalBudgetTwd.value / exchangeRate.value) : 0;
         });
 
-        // ==================== 4. 機酒保險 (4大區全手動資訊與醒目提醒) ====================
+        // ==================== 5. 機酒保險 ====================
         const stayInfo = ref({
           hotelName: '霧嶼·高空美宿（重慶解放碑步行街洪崖洞店）',
           staySummary: '7 晚連住',
           priceText: 'NT$3,900',
           address: '重慶市渝中區解放碑街道八一路260號恆通雲鼎B棟1910號',
           phone: '17815261754',
+          accessCode: '大樓門禁卡刷卡至19樓 · 房間密碼：191088#',
           roomType: '歸隱∣輕享舒心∣麻將機 + 浴缸 + 三衞',
           notes: '交通便捷，下樓即為八一路美食街，步行5分鐘直達解放碑與千廝門大橋視野。',
-          alertTitle: '入住與門禁重要提醒',
+          alertTitle: '入住重要提醒',
           alertText: '高空公寓電梯需刷卡至19樓，抵達前建議提前致電管家確認房間密碼；退房時間為中午 12:00 前。',
           alertType: 'warning'
         });
@@ -2717,39 +2844,21 @@
           subtitle: 'HONG KONG AIRLINES · 轉機1次',
           tagText: '行李直掛',
           outboundTitle: '去程航班 · 2026/10/27 (週二)',
-          outboundRoute: '台北 T2 → 香港 T1/T2 → 重慶 T3',
           outboundLeg1DepTime: '16:30',
           outboundLeg1DepCode: 'TPE',
           outboundLeg1DepAirport: '台北桃園 T2',
-          outboundLeg1Duration: '2h 10m',
-          outboundLeg1ArrTime: '18:40',
-          outboundLeg1ArrCode: 'HKG',
-          outboundLeg1ArrAirport: '香港機場 T1',
           outboundLayoverDuration: '2 小時 10 分',
           outboundLayoverNote: '不同航廈 · 行李直掛',
-          outboundLeg2DepTime: '20:50',
-          outboundLeg2DepCode: 'HKG',
-          outboundLeg2DepAirport: '香港機場 T2',
-          outboundLeg2Duration: '2h 45m',
           outboundLeg2ArrTime: '23:35',
           outboundLeg2ArrCode: 'CKG',
           outboundLeg2ArrAirport: '重慶江北 T3',
 
           inboundTitle: '回程航班 · 2026/11/03 (週二)',
-          inboundRoute: '重慶 T3 → 香港 T1 → 台北 T2',
           inboundLeg1DepTime: '08:40',
           inboundLeg1DepCode: 'CKG',
           inboundLeg1DepAirport: '重慶江北 T3',
-          inboundLeg1Duration: '2h 45m',
-          inboundLeg1ArrTime: '11:25',
-          inboundLeg1ArrCode: 'HKG',
-          inboundLeg1ArrAirport: '香港機場 T1',
           inboundLayoverDuration: '2 小時 15 分',
           inboundLayoverNote: '免提行李 · 直掛台北',
-          inboundLeg2DepTime: '13:40',
-          inboundLeg2DepCode: 'HKG',
-          inboundLeg2DepAirport: '香港機場 T1',
-          inboundLeg2Duration: '1h 50m',
           inboundLeg2ArrTime: '15:30',
           inboundLeg2ArrCode: 'TPE',
           inboundLeg2ArrAirport: '台北桃園 T2',
@@ -2779,9 +2888,7 @@
           companyName: '第一金人壽',
           planName: 'FIRST LIFE · 8天全程海外雙全保障',
           badgeText: '線上投保',
-          section1Title: '旅行平安險 (EasyGo 專案)',
           section1Desc: '• 意外傷害身故失能、意外傷害醫療給付、海外突發疾病醫療（住院/急診/門診）、SOS 海外緊急救援服務。',
-          section2Title: '海外旅遊不便保險',
           section2Desc: '• 班機延誤（滿 4 小時）、行李延誤（滿 6 小時）、行李損失、旅行文件遺失補償、行程更改補償。',
           linkUrl: 'https://www.firstlife.com.tw/FirstOnlineInsuranceWeb/product/141',
           alertTitle: '投保起訖時間重要提醒',
@@ -2809,7 +2916,6 @@
           providerName: 'KKday / 台灣大哥大',
           planName: '中港澳 5G 高速 eSIM / 8日漫遊預付卡',
           tagText: '免翻牆',
-          specTitle: '方案規格與支援服務',
           specDesc: '• 支援免翻牆直接使用 LINE、Google Maps、FB、IG。\n• 可選 eSIM 抵達掃描即用，或實體 SIM 卡插卡隨插即通。',
           instructionText: '開通指引：\n• eSIM：出發前掃描 QRcode 加入行動方案，抵達後開啟「數據漫遊」。\n• 實體卡：手機發送簡訊「DA232」至 935824 開通。',
           linkUrl: 'https://www.kkday.com/zh-tw/product/547059',
@@ -2834,44 +2940,8 @@
           showToast('網路漫遊資訊已更新');
         };
 
-        // 零嘴飲品分類
+        // 飲品小吃分類
         const snackFilterType = ref('ALL');
-
-        // 行程天數列表
-        const daysList = ref([
-          {
-            dayCode: 'D1',
-            dateShort: '10/27',
-            fullDate: '2026/10/27',
-            weekday: '週二',
-            title: '抵達山城 · 旅程啟程',
-            subtitle: '初訪霧都，展開精彩漫步',
-            events: []
-          },
-          {
-            dayCode: 'D2',
-            dateShort: '10/28',
-            fullDate: '2026/10/28',
-            weekday: '週三',
-            title: '老街巷弄探索',
-            subtitle: '自由設定當日亮點與路線',
-            events: []
-          },
-          {
-            dayCode: 'D3',
-            dateShort: '10/29',
-            fullDate: '2026/10/29',
-            weekday: '週四',
-            title: '兩江夜景與美食巡禮',
-            subtitle: '自由設定當日亮點與路線',
-            events: []
-          }
-        ]);
-
-        const currentDay = computed(() => {
-          if (daysList.value.length === 0) return null;
-          return daysList.value[selectedDayIndex.value] || daysList.value[0];
-        });
 
         // Toast 輕量提示
         const toast = reactive({ show: false, message: '' });
@@ -2897,7 +2967,7 @@
           document.body.removeChild(temp);
         };
 
-        // 一鍵產生專屬行程分享連結 (含行程、預算、旅遊主題與機酒保險4大區資訊)
+        // 一鍵產生專屬行程分享連結
         const generateShareUrl = () => {
           try {
             const cleanDays = daysList.value.map(d => ({
@@ -2923,9 +2993,11 @@
             }));
 
             const payload = JSON.stringify({
-              v: 5,
+              v: 6,
               tripMeta: {
                 title: tripMeta.title,
+                startDate: tripMeta.startDate,
+                endDate: tripMeta.endDate,
                 scheduleNote: tripMeta.scheduleNote
               },
               city: currentCity.value,
@@ -2976,14 +3048,13 @@
             const parsed = JSON.parse(jsonStr);
 
             if (parsed) {
-              if (parsed.tripMeta && parsed.tripMeta.title) {
-                tripMeta.title = parsed.tripMeta.title;
-                tripMeta.scheduleNote = parsed.tripMeta.scheduleNote || '';
+              if (parsed.tripMeta) {
+                if (parsed.tripMeta.title) tripMeta.title = parsed.tripMeta.title;
+                if (parsed.tripMeta.startDate) tripMeta.startDate = parsed.tripMeta.startDate;
+                if (parsed.tripMeta.endDate) tripMeta.endDate = parsed.tripMeta.endDate;
+                if (parsed.tripMeta.scheduleNote) tripMeta.scheduleNote = parsed.tripMeta.scheduleNote;
                 try {
-                  localStorage.setItem(LOCAL_KEY_TRIP_META, JSON.stringify({
-                    title: tripMeta.title,
-                    scheduleNote: tripMeta.scheduleNote
-                  }));
+                  localStorage.setItem(LOCAL_KEY_TRIP_META, JSON.stringify(tripMeta));
                 } catch (e) {}
               }
               if (Array.isArray(parsed.days) && parsed.days.length > 0) daysList.value = parsed.days;
@@ -3162,10 +3233,10 @@
         const deleteEvent = (id) => {
           if (!currentDay.value) return;
           currentDay.value.events = currentDay.value.events.filter(e => e.id !== id);
-          showToast('已刪除站點');
+          showToast('已刪除行程站點');
         };
 
-        // 美食清單
+        // 推薦餐廳清單
         const foodList = ref([
           {
             id: 'f-1',
@@ -3175,6 +3246,7 @@
             category: '重慶小麵',
             priceCny: 25,
             image: '',
+            linkUrl: '',
             note: '重慶小麵五十強老字號！濃郁豌豆軟爛起沙，肉醬噴香，麻辣鮮香兼備。',
             isChecked: false
           },
@@ -3186,6 +3258,7 @@
             category: '老火鍋',
             priceCny: 95,
             image: '',
+            linkUrl: 'https://m.dianping.com',
             note: '戴家巷老筒子樓內的社區火鍋，牛油鍋底香醇濃厚。',
             isChecked: false
           }
@@ -3197,12 +3270,12 @@
         const modalFood = reactive({
           isOpen: false,
           isEdit: false,
-          form: { id: '', name: '', address: '', recommendationsStr: '', category: '美食', priceCny: null, image: '', note: '' }
+          form: { id: '', name: '', address: '', recommendationsStr: '', category: '美食', priceCny: null, image: '', linkUrl: '', note: '' }
         });
 
         const openAddFoodModal = () => {
           modalFood.isEdit = false;
-          modalFood.form = { id: '', name: '', address: '', recommendationsStr: '', category: '特色美食', priceCny: null, image: '', note: '' };
+          modalFood.form = { id: '', name: '', address: '', recommendationsStr: '', category: '特色美食', priceCny: null, image: '', linkUrl: '', note: '' };
           modalFood.isOpen = true;
         };
 
@@ -3216,6 +3289,7 @@
             category: food.category,
             priceCny: food.priceCny,
             image: food.image || '',
+            linkUrl: food.linkUrl || '',
             note: food.note || ''
           };
           modalFood.isOpen = true;
@@ -3228,7 +3302,7 @@
             showToast('正在壓縮照片中...');
             const compressed = await compressImage(file, 600, 0.65);
             modalFood.form.image = compressed;
-            showToast('美食照片已就緒');
+            showToast('餐廳照片已就緒');
           } catch (e) {
             showToast('照片處理失敗');
           }
@@ -3247,23 +3321,27 @@
             foodList.value.unshift({ id: 'f-' + Date.now(), ...modalFood.form, recommendations: recs, isChecked: false });
           }
           modalFood.isOpen = false;
-          showToast('美食項目已更新');
+          showToast('推薦餐廳已更新');
         };
 
         const deleteFood = (id) => {
           foodList.value = foodList.value.filter(f => f.id !== id);
-          showToast('已刪除美食');
+          showToast('已刪除推薦餐廳');
         };
 
-        // 零嘴飲品清單
+        // 飲品小吃清單
         const snacksList = ref([
           { id: 's-1', name: '茶顏悅色', type: 'drink', recommendations: ['幽蘭拿鐵', '聲聲烏龍'], description: '頂層現打鮮奶油撒上碧根果碎，茶韻清雅。', isChecked: false },
           { id: 's-2', name: '霸王茶姬', type: 'drink', recommendations: ['伯牙絕弦'], description: '大紅袍與茉莉鮮奶茶代表作。', isChecked: false },
-          { id: 's-3', name: '臭寶 柳州螺螄粉', type: 'snack', description: '濃郁炸腐竹與爆汁酸筍，超商必掃螺螄粉。', isChecked: false }
+          { id: 's-3', name: '好又來酸辣粉', type: 'snackFood', recommendations: ['招牌酸辣粉', '涼糕'], description: '解放碑八一路馳名老字號，酸辣夠勁、粉條彈牙。', isChecked: false },
+          { id: 's-4', name: '重慶烤苕皮豆干', type: 'snackFood', recommendations: ['酸蘿蔔折耳根肉末苕皮'], description: '外皮軟糯微脆，內裹酸蘿蔔泡菜，川渝夜市靈魂。', isChecked: false },
+          { id: 's-5', name: '臭寶 柳州螺螄粉', type: 'snack', recommendations: [], description: '濃郁炸腐竹與爆汁酸筍，超商必掃螺螄粉。', isChecked: false }
         ]);
 
         const snackCount = computed(() => snacksList.value.filter(s => s.type === 'snack').length);
         const drinkCount = computed(() => snacksList.value.filter(s => s.type === 'drink').length);
+        const snackFoodCount = computed(() => snacksList.value.filter(s => s.type === 'snackFood').length);
+
         const filteredSnacksList = computed(() => {
           if (snackFilterType.value === 'ALL') return snacksList.value;
           return snacksList.value.filter(s => s.type === snackFilterType.value);
@@ -3288,7 +3366,7 @@
           modalSnack.form = {
             id: item.id,
             name: item.name,
-            type: item.type,
+            type: item.type || 'drink',
             recommendationsStr: (item.recommendations || []).join('、'),
             description: item.description || ''
           };
@@ -3307,7 +3385,7 @@
             snacksList.value.unshift({ id: 's-' + Date.now(), ...modalSnack.form, recommendations: recs, isChecked: false });
           }
           modalSnack.isOpen = false;
-          showToast('零嘴飲品已儲存');
+          showToast('品項已儲存');
         };
 
         const deleteSnack = (id) => {
@@ -3368,6 +3446,7 @@
         return {
           tripMeta,
           modalTripTitle,
+          computedSchedulePreview,
           openEditTripTitleModal,
           submitSaveTripTitle,
           activeTab,
@@ -3411,7 +3490,6 @@
           deleteBudgetItem,
           getItemsByCategory,
           getCategoryTotalTwd,
-          getCategoryTotalDest,
           totalBudgetTwd,
           totalBudgetDestCurrency,
           stayInfo,
@@ -3449,6 +3527,7 @@
           snackFilterType,
           snackCount,
           drinkCount,
+          snackFoodCount,
           filteredSnacksList,
           toggleSnackCheck,
           modalSnack,
