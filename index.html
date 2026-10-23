@@ -1499,13 +1499,69 @@
             v-for="curr in availableCurrencies" 
             :key="curr.code"
             @click="selectCurrency(curr)"
-            class="p-2 rounded-xl text-xs border text-center transition flex flex-col items-center"
+            class="p-2 rounded-xl text-xs border text-center transition flex flex-col items-center relative group"
             :class="currentCurrency.code === curr.code ? 'bg-cq-gold text-white border-cq-gold shadow-sm font-bold' : 'bg-cq-wash border-cq-border text-cq-charcoal hover:border-cq-muted'"
           >
             <span class="font-mono text-xs">{{ curr.symbol }} {{ curr.code }}</span>
             <span class="text-[10px] opacity-80">{{ curr.name }}</span>
+            <!-- 刪除自訂幣別按鈕 (保留預設常用幣別) -->
+            <span 
+              v-if="curr.isCustom" 
+              @click.stop="removeCustomCurrency(curr.code)" 
+              class="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-cq-charcoal text-white text-[9px] flex items-center justify-center hover:bg-cq-cinnabar shadow-xs" 
+              title="移除此幣別"
+            >
+              <i class="fa-solid fa-xmark"></i>
+            </span>
           </button>
         </div>
+      </div>
+
+      <!-- 自訂新增幣別區塊 -->
+      <div class="p-3 bg-cq-wash/70 rounded-2xl border border-cq-border space-y-2">
+        <label class="block text-[11px] text-cq-muted font-medium flex items-center justify-between">
+          <span class="flex items-center space-x-1">
+            <i class="fa-solid fa-plus text-cq-gold text-[10px]"></i>
+            <span>自訂新增其他幣別 (即時連線抓取)</span>
+          </span>
+          <span class="text-[9px] text-cq-muted font-mono">支援全球 160+ 幣別代碼</span>
+        </label>
+
+        <div class="grid grid-cols-3 gap-1.5">
+          <input 
+            type="text" 
+            v-model="customCurrencyForm.code" 
+            @input="customCurrencyForm.code = customCurrencyForm.code.toUpperCase().trim()"
+            maxlength="4"
+            placeholder="代碼 (如 SGD)" 
+            class="px-2 py-1.5 rounded-xl border border-cq-border bg-white text-cq-charcoal font-mono uppercase text-xs focus:outline-none focus:border-cq-gold font-bold"
+          >
+          <input 
+            type="text" 
+            v-model="customCurrencyForm.symbol" 
+            maxlength="4"
+            placeholder="符號 (如 S$)" 
+            class="px-2 py-1.5 rounded-xl border border-cq-border bg-white text-cq-charcoal font-mono text-xs focus:outline-none focus:border-cq-gold"
+          >
+          <input 
+            type="text" 
+            v-model="customCurrencyForm.name" 
+            placeholder="名稱 (如 新幣)" 
+            class="px-2 py-1.5 rounded-xl border border-cq-border bg-white text-cq-charcoal text-xs focus:outline-none focus:border-cq-gold"
+          >
+        </div>
+
+        <button 
+          type="button" 
+          @click="submitAddCustomCurrency" 
+          :disabled="isFetchingCustomRate"
+          class="w-full py-1.5 bg-cq-charcoal hover:bg-black text-white rounded-xl text-xs font-medium transition flex items-center justify-center space-x-1.5 disabled:opacity-50"
+        >
+          <i v-if="isFetchingCustomRate" class="fa-solid fa-spinner fa-spin text-[10px]"></i>
+          <i v-else class="fa-solid fa-cloud-arrow-down text-[10px] text-cq-gold"></i>
+          <span>{{ isFetchingCustomRate ? '正在連線獲取即時匯率...' : '新增並連線更新即時匯率' }}</span>
+        </button>
+        <p v-if="customCurrencyError" class="text-[10px] text-cq-cinnabar font-medium">{{ customCurrencyError }}</p>
       </div>
 
       <div class="p-3 bg-cq-wash rounded-xl border border-cq-border space-y-1.5 text-xs font-mono">
@@ -1515,7 +1571,7 @@
         </div>
         <div class="flex justify-between items-center text-[11px] text-cq-muted">
           <span>反向參考：</span>
-          <span>100 TWD ≈ {{ (100 / exchangeRate).toFixed(2) }} {{ currentCurrency.code }}</span>
+          <span>100 TWD ≈ {{ exchangeRate > 0 ? (100 / exchangeRate).toFixed(2) : 0 }} {{ currentCurrency.code }}</span>
         </div>
       </div>
 
@@ -2562,6 +2618,7 @@
           { name: '東京', lat: 35.6762, lng: 139.6503, currency: 'JPY' },
           { name: '首爾', lat: 37.5665, lng: 126.9780, currency: 'KRW' },
           { name: '曼谷', lat: 13.7563, lng: 100.5018, currency: 'THB' },
+          { name: '河內', lat: 21.0285, lng: 105.8542, currency: 'VND' },
           { name: '香港', lat: 22.3193, lng: 114.1694, currency: 'HKD' },
           { name: '台北', lat: 25.0330, lng: 121.5654, currency: 'TWD' }
         ];
@@ -2639,27 +2696,118 @@
         };
 
         // ==================== 3. 貨幣與即時匯率系統 ====================
-        const availableCurrencies = [
+        const LOCAL_KEY_CUSTOM_CURRENCIES = 'cq_custom_currencies_v1';
+        const defaultCurrencies = [
           { code: 'CNY', symbol: '¥', name: '人民幣' },
           { code: 'JPY', symbol: '¥', name: '日圓' },
           { code: 'KRW', symbol: '₩', name: '韓元' },
           { code: 'THB', symbol: '฿', name: '泰銖' },
+          { code: 'VND', symbol: '₫', name: '越南盾' },
           { code: 'USD', symbol: '$', name: '美元' },
           { code: 'EUR', symbol: '€', name: '歐元' },
           { code: 'HKD', symbol: 'HK$', name: '港幣' },
           { code: 'TWD', symbol: 'NT$', name: '新台幣' }
         ];
 
+        // 讀取本機儲存的自訂幣別
+        let storedCustomCurrencies = [];
+        try {
+          const cached = localStorage.getItem(LOCAL_KEY_CUSTOM_CURRENCIES);
+          if (cached) {
+            storedCustomCurrencies = JSON.parse(cached);
+          }
+        } catch (e) {}
+
+        const availableCurrencies = ref([...defaultCurrencies, ...storedCustomCurrencies]);
         const currentCurrency = ref({ code: 'CNY', symbol: '¥', name: '人民幣' });
         const exchangeRate = ref(4.52);
         const modalCurrency = reactive({ isOpen: false });
 
-        const openCurrencyModal = () => { modalCurrency.isOpen = true; };
+        const customCurrencyForm = reactive({
+          code: '',
+          symbol: '',
+          name: ''
+        });
+        const isFetchingCustomRate = ref(false);
+        const customCurrencyError = ref('');
+
+        const openCurrencyModal = () => { 
+          customCurrencyError.value = '';
+          modalCurrency.isOpen = true; 
+        };
 
         const selectCurrency = (curr) => {
           currentCurrency.value = { ...curr };
           fetchLiveExchangeRate(true);
           modalCurrency.isOpen = false;
+        };
+
+        const submitAddCustomCurrency = async () => {
+          customCurrencyError.value = '';
+          const code = (customCurrencyForm.code || '').toUpperCase().trim();
+          if (!code || code.length < 3) {
+            customCurrencyError.value = '請輸入標準 3 碼貨幣代號 (例如 SGD, GBP, AUD, VND)';
+            return;
+          }
+          if (availableCurrencies.value.some(c => c.code === code)) {
+            customCurrencyError.value = `貨幣代碼 ${code} 已存在於列表中`;
+            return;
+          }
+
+          isFetchingCustomRate.value = true;
+          try {
+            // 即時向即時外匯 API 驗證該貨幣代碼並取得最新匯率
+            const res = await fetch(`https://open.er-api.com/v6/latest/${code}`);
+            const data = await res.json();
+
+            if (!data || data.result !== 'success' || !data.rates || !data.rates.TWD) {
+              throw new Error('無效的貨幣代碼或查無匯率');
+            }
+
+            const liveRate = parseFloat(data.rates.TWD.toFixed(4));
+            const newCurr = {
+              code: code,
+              symbol: customCurrencyForm.symbol.trim() || code,
+              name: customCurrencyForm.name.trim() || code,
+              isCustom: true
+            };
+
+            availableCurrencies.value.push(newCurr);
+
+            // 儲存自訂幣別至本機
+            const customList = availableCurrencies.value.filter(c => c.isCustom);
+            try {
+              localStorage.setItem(LOCAL_KEY_CUSTOM_CURRENCIES, JSON.stringify(customList));
+            } catch (e) {}
+
+            // 切換為新選取的幣別並更新匯率
+            currentCurrency.value = newCurr;
+            exchangeRate.value = liveRate;
+
+            customCurrencyForm.code = '';
+            customCurrencyForm.symbol = '';
+            customCurrencyForm.name = '';
+
+            showToast(`成功新增 ${code}！即時匯率：1 ${code} ≈ ${liveRate.toFixed(4)} TWD`);
+          } catch (err) {
+            customCurrencyError.value = `連線查詢失敗，請確認代碼是否正確 (如 SGD, AUD, MYR, GBP)`;
+          } finally {
+            isFetchingCustomRate.value = false;
+          }
+        };
+
+        const removeCustomCurrency = (code) => {
+          availableCurrencies.value = availableCurrencies.value.filter(c => c.code !== code);
+          const customList = availableCurrencies.value.filter(c => c.isCustom);
+          try {
+            localStorage.setItem(LOCAL_KEY_CUSTOM_CURRENCIES, JSON.stringify(customList));
+          } catch (e) {}
+
+          if (currentCurrency.value.code === code) {
+            currentCurrency.value = availableCurrencies.value[0];
+            fetchLiveExchangeRate(false);
+          }
+          showToast(`已移除幣別 ${code}`);
         };
 
         const fetchLiveExchangeRate = async (showNotification = false) => {
@@ -3480,6 +3628,11 @@
           modalCurrency,
           openCurrencyModal,
           selectCurrency,
+          customCurrencyForm,
+          isFetchingCustomRate,
+          customCurrencyError,
+          submitAddCustomCurrency,
+          removeCustomCurrency,
           fetchLiveExchangeRate,
           CATEGORY_KEYS,
           budgetItems,
