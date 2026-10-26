@@ -22,7 +22,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Noto+Sans+TC:wght@300;400;500;700&family=Noto+Serif+TC:wght@400;600;900&display=swap" rel="stylesheet">
 
-  <!-- Tailwind 顏色配置 -->
+  <!-- Tailwind 顏色配置：回歸經典和紙手帳色彩 -->
   <script>
     tailwind.config = {
       theme: {
@@ -314,7 +314,7 @@
               <img :src="item.image" :alt="item.name" class="w-full h-full object-cover">
             </div>
 
-            <!-- 地址與複製 -->
+            <!-- 地址與複製 (複製按鈕在地址欄內) -->
             <div v-if="item.address" class="mt-2 text-xs bg-cq-wash/80 p-2 rounded-xl border border-cq-border/70 flex items-center justify-between gap-2">
               <div class="flex items-start space-x-1.5 text-cq-charcoal/80 flex-1 leading-snug">
                 <i class="fa-solid fa-location-dot text-cq-cinnabar text-xs mt-0.5 flex-shrink-0"></i>
@@ -411,6 +411,26 @@
           </div>
         </div>
 
+        <!-- 獨立額外新增：預估兌換外幣需求卡 (只合計外幣項目) -->
+        <div class="p-3 bg-cq-goldLight/80 rounded-2xl border border-cq-gold/40 flex items-center justify-between shadow-xs">
+          <div class="space-y-0.5">
+            <div class="flex items-center space-x-1.5 text-cq-gold font-bold text-xs font-serif-cq">
+              <i class="fa-solid fa-coins text-[11px]"></i>
+              <span>預估兌換外幣需求</span>
+            </div>
+            <span class="text-[10px] text-cq-muted block font-sans">僅統計當地外幣開銷（排除台幣已付）</span>
+          </div>
+          <div class="text-right font-mono">
+            <strong class="text-sm font-bold text-cq-charcoal block">
+              {{ currentCurrency.symbol }}{{ totalForeignCurrencyNeeded.toLocaleString() }} {{ currentCurrency.code }}
+            </strong>
+            <span class="text-[10px] text-cq-muted block">
+              (≈ NT${{ Math.round(totalForeignCurrencyNeeded * exchangeRate).toLocaleString() }})
+            </span>
+          </div>
+        </div>
+
+        <!-- 各分類小計總結 -->
         <div class="p-2.5 bg-cq-wash rounded-xl border border-cq-border text-xs space-y-1 font-mono">
           <div class="flex justify-between items-center text-cq-charcoal">
             <span>固定大項小計:</span>
@@ -838,7 +858,7 @@
             <span>電話：{{ stayInfo.phone }}</span>
           </div>
 
-          <!-- 房型顯示 -->
+          <!-- 房型顯示：與地址、電話維持一致的排版格式 -->
           <div v-if="stayInfo.roomType" class="flex items-start space-x-1.5 text-cq-muted leading-relaxed">
             <i class="fa-solid fa-bed mt-0.5 text-cq-gold flex-shrink-0"></i>
             <span>房型：{{ stayInfo.roomType }}</span>
@@ -926,7 +946,7 @@
           </div>
         </div>
 
-        <!-- 去程 -->
+        <!-- 去程航班：日期緊貼標題旁，字型大小一致 -->
         <div class="space-y-2">
           <div class="flex items-center space-x-2">
             <span class="font-serif-cq font-bold text-sm text-cq-charcoal tracking-wide">去程航班</span>
@@ -993,7 +1013,7 @@
           </div>
         </div>
 
-        <!-- 回程 -->
+        <!-- 回程航班：日期緊貼標題旁，字型大小一致 -->
         <div class="space-y-2 pt-2 border-t border-cq-border/60">
           <div class="flex items-center space-x-2">
             <span class="font-serif-cq font-bold text-sm text-cq-charcoal tracking-wide">回程航班</span>
@@ -1311,8 +1331,7 @@
               </div>
             </div>
 
-            <!-- 地址與操作按鈕區：複製按鈕在地址欄內，線上團購獨立在右側 -->
-            <!-- 地址與操作按鈕區：複製按鈕在地址欄內，線上連結在右側 -->
+            <!-- 地址與操作按鈕區：複製按鈕在地址欄內，獨立「連結」按鈕在右側 -->
             <div v-if="food.address || food.linkUrl" class="mt-2.5 flex items-center justify-between gap-2">
               <div v-if="food.address" class="flex items-center justify-between space-x-1.5 text-cq-charcoal/80 flex-1 leading-snug bg-cq-wash/80 p-2 rounded-xl border border-cq-border/70 min-w-0">
                 <div class="flex items-start space-x-1.5 min-w-0 flex-1">
@@ -1600,7 +1619,7 @@
     </div>
   </nav>
 
-  <!-- 彈窗 (0): 編輯旅遊主題與日程 Modal (原生下拉月曆與自動天數生成) -->
+  <!-- 彈窗 (0): 編輯旅遊主題與日程 Modal -->
   <div v-if="modalTripTitle.isOpen" class="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
     <div class="bg-white rounded-3xl p-5 w-full max-w-sm border border-cq-border shadow-xl space-y-4">
       <div class="flex justify-between items-center">
@@ -2977,7 +2996,7 @@
         const foodSubTab = ref('food');
         const selectedDayIndex = ref(0);
 
-        // ==================== 0. 行程天數列表 (前置宣告避免依賴錯誤) ====================
+        // ==================== 0. 行程天數列表 ====================
         const daysList = ref([
           {
             dayCode: 'D1',
@@ -3231,7 +3250,7 @@
 
         const selectCity = (city) => {
           currentCity.value = { ...city };
-          const matchedCurr = availableCurrencies.find(c => c.code === city.currency);
+          const matchedCurr = availableCurrencies.value.find(c => c.code === city.currency);
           if (matchedCurr) {
             currentCurrency.value = { ...matchedCurr };
             fetchLiveExchangeRate(false);
@@ -3303,7 +3322,6 @@
           { code: 'TWD', symbol: 'NT$', name: '新台幣' }
         ];
 
-        // 讀取本機儲存的自訂幣別
         let storedCustomCurrencies = [];
         try {
           const cached = localStorage.getItem(LOCAL_KEY_CUSTOM_CURRENCIES);
@@ -3350,7 +3368,6 @@
 
           isFetchingCustomRate.value = true;
           try {
-            // 即時向即時外匯 API 驗證該貨幣代碼並取得最新匯率
             const res = await fetch(`https://open.er-api.com/v6/latest/${code}`);
             const data = await res.json();
 
@@ -3368,13 +3385,11 @@
 
             availableCurrencies.value.push(newCurr);
 
-            // 儲存自訂幣別至本機
             const customList = availableCurrencies.value.filter(c => c.isCustom);
             try {
               localStorage.setItem(LOCAL_KEY_CUSTOM_CURRENCIES, JSON.stringify(customList));
             } catch (e) {}
 
-            // 切換為新選取的幣別並更新匯率
             currentCurrency.value = newCurr;
             exchangeRate.value = liveRate;
 
@@ -3456,7 +3471,6 @@
 
         const openCategoryBatchEditModal = (cat) => {
           modalCategoryBatch.categoryKey = cat;
-          // 深度複製該分類所有項目供編輯
           const currentList = budgetItems.value.filter(b => b.category === cat);
           modalCategoryBatch.items = currentList.map(item => ({
             id: item.id,
@@ -3484,7 +3498,6 @@
 
         const submitSaveCategoryBatch = () => {
           const cat = modalCategoryBatch.categoryKey;
-          // 過濾掉未輸入名稱或金額為 0 的無效行
           const validCleanItems = modalCategoryBatch.items
             .filter(i => (i.title || '').trim() && Number(i.amount) > 0)
             .map(i => ({
@@ -3496,7 +3509,6 @@
               notes: (i.notes || '').trim()
             }));
 
-          // 將該分類原本的項目替換為新編輯後的項目，其餘分類項目維持不變
           budgetItems.value = [
             ...budgetItems.value.filter(b => b.category !== cat),
             ...validCleanItems
@@ -3586,6 +3598,13 @@
 
         const totalBudgetDestCurrency = computed(() => {
           return exchangeRate.value > 0 ? (totalBudgetTwd.value / exchangeRate.value) : 0;
+        });
+
+        // 預估兌換外幣需求 (只合計目的地外幣項目，不含台幣)
+        const totalForeignCurrencyNeeded = computed(() => {
+          return budgetItems.value
+            .filter(b => b.currency !== 'TWD')
+            .reduce((sum, b) => sum + Number(b.amount || 0), 0);
         });
 
         // ==================== 5. 機酒保險 (24小時制，保留班機號碼) ====================
@@ -3800,7 +3819,7 @@
             }));
 
             const payload = JSON.stringify({
-              v: 7,
+              v: 8,
               tripMeta: {
                 title: tripMeta.title,
                 startDate: tripMeta.startDate,
@@ -4136,7 +4155,7 @@
           showToast('已刪除推薦餐廳');
         };
 
-        // 飲品小吃清單 (新增 linkUrl 支援)
+        // 飲品小吃清單
         const snacksList = ref([
           { id: 's-1', name: '茶顏悅色', type: 'drink', linkUrl: '', recommendations: ['幽蘭拿鐵', '聲聲烏龍'], description: '頂層現打鮮奶油撒上碧根果碎，茶韻清雅。', isChecked: false },
           { id: 's-2', name: '霸王茶姬', type: 'drink', linkUrl: '', recommendations: ['伯牙絕弦'], description: '大紅袍與茉莉鮮奶茶代表作。', isChecked: false },
@@ -4201,7 +4220,7 @@
           showToast('已刪除品項');
         };
 
-        // 備用口袋景點 (新增 linkUrl 支援)
+        // 備用口袋景點
         const backupSpots = ref([
           { id: 'b-1', name: '李子壩抗戰遺址公園', tag: '歷史綠意', duration: '30～45分鐘', linkUrl: '', desc: '緊鄰嘉陵江，可近距離漫步於綠樹林蔭間欣賞江景。' }
         ]);
@@ -4317,6 +4336,7 @@
           getCategoryTotalTwd,
           totalBudgetTwd,
           totalBudgetDestCurrency,
+          totalForeignCurrencyNeeded,
           stayInfo,
           modalStay,
           openEditStayModal,
