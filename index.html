@@ -448,9 +448,20 @@
             <i class="fa-solid fa-plane text-xs text-cq-moss"></i>
             <h3 class="font-serif-cq font-bold text-sm text-cq-charcoal">固定大項開銷</h3>
           </div>
-          <span class="text-xs font-mono font-bold text-cq-moss">
-            小計: NT${{ Math.round(getCategoryTotalTwd(CATEGORY_KEYS.FIXED)).toLocaleString() }}
-          </span>
+          <div class="flex items-center space-x-2">
+            <span class="text-xs font-mono font-bold text-cq-moss">
+              小計: NT${{ Math.round(getCategoryTotalTwd(CATEGORY_KEYS.FIXED)).toLocaleString() }}
+            </span>
+            <button 
+              type="button" 
+              @click="openCategoryBatchEditModal(CATEGORY_KEYS.FIXED)" 
+              class="px-2 py-0.5 rounded-lg bg-cq-wash hover:bg-cq-charcoal hover:text-white text-cq-muted border border-cq-border text-xs transition flex items-center space-x-1"
+              title="管理此分類項目"
+            >
+              <i class="fa-regular fa-pen-to-square text-[10px]"></i>
+              <span class="text-[11px] font-serif-cq">編輯</span>
+            </button>
+          </div>
         </div>
 
         <div v-if="getItemsByCategory(CATEGORY_KEYS.FIXED).length > 0" class="space-y-1.5">
@@ -478,19 +489,13 @@
                 </span>
                 <span v-if="b.notes" class="text-[10px] text-cq-muted block pl-3 truncate">{{ b.notes }}</span>
               </div>
-              <div class="text-right flex items-center space-x-2 flex-shrink-0">
+              <div class="text-right flex-shrink-0">
                 <div class="flex items-baseline space-x-1">
                   <strong class="text-cq-charcoal">{{ currentCurrency.symbol }}{{ b.amount.toLocaleString() }} {{ b.currency }}</strong>
                   <span class="text-[10px] text-cq-muted font-normal">
                     (≈ NT${{ Math.round(b.amount * exchangeRate).toLocaleString() }})
                   </span>
                 </div>
-                <button type="button" @click="openEditBudgetModal(b)" class="text-cq-muted hover:text-cq-charcoal p-0.5" title="編輯">
-                  <i class="fa-regular fa-pen-to-square text-xs"></i>
-                </button>
-                <button type="button" @click="deleteBudgetItem(b.id)" class="text-cq-muted hover:text-cq-cinnabar p-0.5" title="刪除">
-                  <i class="fa-regular fa-trash-can text-xs"></i>
-                </button>
               </div>
             </div>
           </div>
@@ -516,14 +521,8 @@
                 </span>
                 <span v-if="b.notes" class="text-[10px] text-cq-muted block pl-3 truncate">{{ b.notes }}</span>
               </div>
-              <div class="text-right flex items-center space-x-2 flex-shrink-0">
+              <div class="text-right flex-shrink-0">
                 <strong class="text-cq-charcoal block">NT${{ b.amount.toLocaleString() }}</strong>
-                <button type="button" @click="openEditBudgetModal(b)" class="text-cq-muted hover:text-cq-charcoal p-0.5" title="編輯">
-                  <i class="fa-regular fa-pen-to-square text-xs"></i>
-                </button>
-                <button type="button" @click="deleteBudgetItem(b.id)" class="text-cq-muted hover:text-cq-cinnabar p-0.5" title="刪除">
-                  <i class="fa-regular fa-trash-can text-xs"></i>
-                </button>
               </div>
             </div>
           </div>
@@ -540,9 +539,20 @@
             <i class="fa-solid fa-ticket text-xs text-cq-cinnabar"></i>
             <h3 class="font-serif-cq font-bold text-sm text-cq-charcoal">行程門票與體驗項目</h3>
           </div>
-          <span class="text-xs font-mono font-bold text-cq-cinnabar">
-            小計: NT${{ Math.round(getCategoryTotalTwd(CATEGORY_KEYS.TICKET)).toLocaleString() }}
-          </span>
+          <div class="flex items-center space-x-2">
+            <span class="text-xs font-mono font-bold text-cq-cinnabar">
+              小計: NT${{ Math.round(getCategoryTotalTwd(CATEGORY_KEYS.TICKET)).toLocaleString() }}
+            </span>
+            <button 
+              type="button" 
+              @click="openCategoryBatchEditModal(CATEGORY_KEYS.TICKET)" 
+              class="px-2 py-0.5 rounded-lg bg-cq-wash hover:bg-cq-charcoal hover:text-white text-cq-muted border border-cq-border text-xs transition flex items-center space-x-1"
+              title="管理此分類項目"
+            >
+              <i class="fa-regular fa-pen-to-square text-[10px]"></i>
+              <span class="text-[11px] font-serif-cq">編輯</span>
+            </button>
+          </div>
         </div>
 
         <div v-if="getItemsByCategory(CATEGORY_KEYS.TICKET).length > 0" class="space-y-1.5">
@@ -570,19 +580,13 @@
                 </span>
                 <span v-if="b.notes" class="text-[10px] text-cq-muted block pl-3 truncate">{{ b.notes }}</span>
               </div>
-              <div class="text-right flex items-center space-x-2 flex-shrink-0">
+              <div class="text-right flex-shrink-0">
                 <div class="flex items-baseline space-x-1">
                   <strong class="text-cq-charcoal">{{ currentCurrency.symbol }}{{ b.amount.toLocaleString() }} {{ b.currency }}</strong>
                   <span class="text-[10px] text-cq-muted font-normal">
                     (≈ NT${{ Math.round(b.amount * exchangeRate).toLocaleString() }})
                   </span>
                 </div>
-                <button type="button" @click="openEditBudgetModal(b)" class="text-cq-muted hover:text-cq-charcoal p-0.5" title="編輯">
-                  <i class="fa-regular fa-pen-to-square text-xs"></i>
-                </button>
-                <button type="button" @click="deleteBudgetItem(b.id)" class="text-cq-muted hover:text-cq-cinnabar p-0.5" title="刪除">
-                  <i class="fa-regular fa-trash-can text-xs"></i>
-                </button>
               </div>
             </div>
           </div>
@@ -608,20 +612,14 @@
                 </span>
                 <span v-if="b.notes" class="text-[10px] text-cq-muted block pl-3 truncate">{{ b.notes }}</span>
               </div>
-              <div class="text-right flex items-center space-x-2 flex-shrink-0">
+              <div class="text-right flex-shrink-0">
                 <strong class="text-cq-charcoal block">NT${{ b.amount.toLocaleString() }}</strong>
-                <button type="button" @click="openEditBudgetModal(b)" class="text-cq-muted hover:text-cq-charcoal p-0.5" title="編輯">
-                  <i class="fa-regular fa-pen-to-square text-xs"></i>
-                </button>
-                <button type="button" @click="deleteBudgetItem(b.id)" class="text-cq-muted hover:text-cq-cinnabar p-0.5" title="刪除">
-                  <i class="fa-regular fa-trash-can text-xs"></i>
-                </button>
               </div>
             </div>
           </div>
         </div>
         <div v-else class="text-xs text-cq-muted p-2.5 bg-cq-wash/40 rounded-xl text-center border border-dashed border-cq-border">
-          目前尚無門票或體驗項目，點擊上方按鈕新增。
+          目前尚無門票或體驗項目。
         </div>
       </div>
 
@@ -632,9 +630,20 @@
             <i class="fa-solid fa-utensils text-xs text-cq-gold"></i>
             <h3 class="font-serif-cq font-bold text-sm text-cq-charcoal">餐食預估費用</h3>
           </div>
-          <span class="text-xs font-mono font-bold text-cq-gold">
-            小計: NT${{ Math.round(getCategoryTotalTwd(CATEGORY_KEYS.FOOD)).toLocaleString() }}
-          </span>
+          <div class="flex items-center space-x-2">
+            <span class="text-xs font-mono font-bold text-cq-gold">
+              小計: NT${{ Math.round(getCategoryTotalTwd(CATEGORY_KEYS.FOOD)).toLocaleString() }}
+            </span>
+            <button 
+              type="button" 
+              @click="openCategoryBatchEditModal(CATEGORY_KEYS.FOOD)" 
+              class="px-2 py-0.5 rounded-lg bg-cq-wash hover:bg-cq-charcoal hover:text-white text-cq-muted border border-cq-border text-xs transition flex items-center space-x-1"
+              title="管理此分類項目"
+            >
+              <i class="fa-regular fa-pen-to-square text-[10px]"></i>
+              <span class="text-[11px] font-serif-cq">編輯</span>
+            </button>
+          </div>
         </div>
 
         <div v-if="getItemsByCategory(CATEGORY_KEYS.FOOD).length > 0" class="space-y-1.5">
@@ -662,19 +671,13 @@
                 </span>
                 <span v-if="b.notes" class="text-[10px] text-cq-muted block pl-3 truncate">{{ b.notes }}</span>
               </div>
-              <div class="text-right flex items-center space-x-2 flex-shrink-0">
+              <div class="text-right flex-shrink-0">
                 <div class="flex items-baseline space-x-1">
                   <strong class="text-cq-charcoal">{{ currentCurrency.symbol }}{{ b.amount.toLocaleString() }} {{ b.currency }}</strong>
                   <span class="text-[10px] text-cq-muted font-normal">
                     (≈ NT${{ Math.round(b.amount * exchangeRate).toLocaleString() }})
                   </span>
                 </div>
-                <button type="button" @click="openEditBudgetModal(b)" class="text-cq-muted hover:text-cq-charcoal p-0.5" title="編輯">
-                  <i class="fa-regular fa-pen-to-square text-xs"></i>
-                </button>
-                <button type="button" @click="deleteBudgetItem(b.id)" class="text-cq-muted hover:text-cq-cinnabar p-0.5" title="刪除">
-                  <i class="fa-regular fa-trash-can text-xs"></i>
-                </button>
               </div>
             </div>
           </div>
@@ -700,20 +703,14 @@
                 </span>
                 <span v-if="b.notes" class="text-[10px] text-cq-muted block pl-3 truncate">{{ b.notes }}</span>
               </div>
-              <div class="text-right flex items-center space-x-2 flex-shrink-0">
+              <div class="text-right flex-shrink-0">
                 <strong class="text-cq-charcoal block">NT${{ b.amount.toLocaleString() }}</strong>
-                <button type="button" @click="openEditBudgetModal(b)" class="text-cq-muted hover:text-cq-charcoal p-0.5" title="編輯">
-                  <i class="fa-regular fa-pen-to-square text-xs"></i>
-                </button>
-                <button type="button" @click="deleteBudgetItem(b.id)" class="text-cq-muted hover:text-cq-cinnabar p-0.5" title="刪除">
-                  <i class="fa-regular fa-trash-can text-xs"></i>
-                </button>
               </div>
             </div>
           </div>
         </div>
         <div v-else class="text-xs text-cq-muted p-2.5 bg-cq-wash/40 rounded-xl text-center border border-dashed border-cq-border">
-          目前尚無餐食預算項目，點擊上方按鈕新增。
+          目前尚無餐食預算項目。
         </div>
       </div>
 
@@ -724,9 +721,20 @@
             <i class="fa-solid fa-wand-magic-sparkles text-xs text-cq-cinnabar"></i>
             <h3 class="font-serif-cq font-bold text-sm text-cq-charcoal">個人限定項目</h3>
           </div>
-          <span class="text-xs font-mono font-bold text-cq-moss">
-            小計: NT${{ Math.round(getCategoryTotalTwd(CATEGORY_KEYS.PERSONAL)).toLocaleString() }}
-          </span>
+          <div class="flex items-center space-x-2">
+            <span class="text-xs font-mono font-bold text-cq-moss">
+              小計: NT${{ Math.round(getCategoryTotalTwd(CATEGORY_KEYS.PERSONAL)).toLocaleString() }}
+            </span>
+            <button 
+              type="button" 
+              @click="openCategoryBatchEditModal(CATEGORY_KEYS.PERSONAL)" 
+              class="px-2 py-0.5 rounded-lg bg-cq-wash hover:bg-cq-charcoal hover:text-white text-cq-muted border border-cq-border text-xs transition flex items-center space-x-1"
+              title="管理此分類項目"
+            >
+              <i class="fa-regular fa-pen-to-square text-[10px]"></i>
+              <span class="text-[11px] font-serif-cq">編輯</span>
+            </button>
+          </div>
         </div>
 
         <div v-if="getItemsByCategory(CATEGORY_KEYS.PERSONAL).length > 0" class="space-y-1.5">
@@ -754,19 +762,13 @@
                 </span>
                 <span v-if="b.notes" class="text-[10px] text-cq-muted block pl-3 truncate">{{ b.notes }}</span>
               </div>
-              <div class="text-right flex items-center space-x-2 flex-shrink-0">
+              <div class="text-right flex-shrink-0">
                 <div class="flex items-baseline space-x-1">
                   <strong class="text-cq-charcoal">{{ currentCurrency.symbol }}{{ b.amount.toLocaleString() }} {{ b.currency }}</strong>
                   <span class="text-[10px] text-cq-muted font-normal">
                     (≈ NT${{ Math.round(b.amount * exchangeRate).toLocaleString() }})
                   </span>
                 </div>
-                <button type="button" @click="openEditBudgetModal(b)" class="text-cq-muted hover:text-cq-charcoal p-0.5" title="編輯">
-                  <i class="fa-regular fa-pen-to-square text-xs"></i>
-                </button>
-                <button type="button" @click="deleteBudgetItem(b.id)" class="text-cq-muted hover:text-cq-cinnabar p-0.5" title="刪除">
-                  <i class="fa-regular fa-trash-can text-xs"></i>
-                </button>
               </div>
             </div>
           </div>
@@ -792,20 +794,14 @@
                 </span>
                 <span v-if="b.notes" class="text-[10px] text-cq-muted block pl-3 truncate">{{ b.notes }}</span>
               </div>
-              <div class="text-right flex items-center space-x-2 flex-shrink-0">
+              <div class="text-right flex-shrink-0">
                 <strong class="text-cq-charcoal block">NT${{ b.amount.toLocaleString() }}</strong>
-                <button type="button" @click="openEditBudgetModal(b)" class="text-cq-muted hover:text-cq-charcoal p-0.5" title="編輯">
-                  <i class="fa-regular fa-pen-to-square text-xs"></i>
-                </button>
-                <button type="button" @click="deleteBudgetItem(b.id)" class="text-cq-muted hover:text-cq-cinnabar p-0.5" title="刪除">
-                  <i class="fa-regular fa-trash-can text-xs"></i>
-                </button>
               </div>
             </div>
           </div>
         </div>
         <div v-else class="text-xs text-cq-muted p-2.5 bg-cq-wash/40 rounded-xl text-center border border-dashed border-cq-border">
-          目前尚無個人限定項目（如寫真/特殊私房行程）。
+          目前尚無個人限定項目。
         </div>
       </div>
     </section>
@@ -1847,13 +1843,119 @@
     </div>
   </div>
 
-  <!-- 彈窗 (C): 預算項目 新增/編輯 Modal -->
+  <!-- 彈窗 (C-Batch): 分類批次管理與編輯 Modal -->
+  <div v-if="modalCategoryBatch.isOpen" class="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="bg-white rounded-t-3xl sm:rounded-3xl p-4 sm:p-5 w-full max-w-sm border border-cq-border shadow-xl space-y-3.5 max-h-[90vh] flex flex-col">
+      <div class="flex justify-between items-center pb-1 border-b border-cq-border/60">
+        <div>
+          <span class="text-[10px] font-mono text-cq-muted uppercase block">Category Editor</span>
+          <h3 class="font-serif-cq font-bold text-sm text-cq-charcoal flex items-center space-x-1.5">
+            <i class="fa-regular fa-pen-to-square text-cq-cinnabar"></i>
+            <span>編輯「{{ getCategoryDisplayName(modalCategoryBatch.categoryKey) }}」</span>
+          </h3>
+        </div>
+        <button type="button" @click="modalCategoryBatch.isOpen = false" class="text-cq-muted hover:text-cq-charcoal text-xs p-1">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- 項目列表 (可即時修改、刪除) -->
+      <div class="flex-1 overflow-y-auto space-y-2.5 pr-1 text-xs">
+        <div v-if="modalCategoryBatch.items.length === 0" class="text-center py-6 text-cq-muted space-y-2 border border-dashed border-cq-border rounded-2xl bg-cq-wash/30">
+          <i class="fa-regular fa-folder-open text-base text-cq-muted/70 block"></i>
+          <span>目前此分類尚無任何項目，請點擊下方「新增項目」</span>
+        </div>
+
+        <div 
+          v-for="(item, idx) in modalCategoryBatch.items" 
+          :key="item.id || idx"
+          class="p-2.5 bg-cq-wash/60 rounded-2xl border border-cq-border/80 space-y-2 relative group"
+        >
+          <div class="flex items-center justify-between gap-1.5">
+            <span class="w-4 h-4 rounded-full bg-white border border-cq-border flex items-center justify-center text-[10px] font-mono text-cq-muted select-none flex-shrink-0">
+              {{ idx + 1 }}
+            </span>
+            <input 
+              type="text" 
+              v-model="item.title" 
+              placeholder="項目名稱 (如 機票/門票/餐費)" 
+              class="flex-1 px-2.5 py-1.5 rounded-xl border border-cq-border bg-white text-xs font-medium text-cq-charcoal focus:outline-none focus:border-cq-cinnabar"
+            >
+            <button 
+              type="button" 
+              @click="removeCategoryBatchItem(idx)" 
+              class="w-6 h-6 rounded-lg text-cq-muted hover:text-cq-cinnabar hover:bg-rose-50 flex items-center justify-center transition flex-shrink-0"
+              title="刪除此項目"
+            >
+              <i class="fa-regular fa-trash-can text-xs"></i>
+            </button>
+          </div>
+
+          <div class="grid grid-cols-2 gap-1.5">
+            <div>
+              <input 
+                type="number" 
+                v-model.number="item.amount" 
+                placeholder="金額 (0.0)" 
+                class="w-full px-2.5 py-1.5 rounded-xl border border-cq-border bg-white text-xs font-mono font-bold text-cq-charcoal focus:outline-none focus:border-cq-cinnabar"
+              >
+            </div>
+            <div>
+              <select 
+                v-model="item.currency" 
+                class="w-full px-2 py-1.5 rounded-xl border border-cq-border bg-white text-xs font-mono font-bold text-cq-charcoal focus:outline-none focus:border-cq-cinnabar"
+              >
+                <option :value="currentCurrency.code">{{ currentCurrency.code }} ({{ currentCurrency.symbol }})</option>
+                <option value="TWD">TWD (NT$)</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <input 
+              type="text" 
+              v-model="item.notes" 
+              placeholder="備註說明 (選填)" 
+              class="w-full px-2.5 py-1 rounded-xl border border-cq-border bg-white text-[11px] text-cq-charcoal focus:outline-none focus:border-cq-cinnabar"
+            >
+          </div>
+        </div>
+
+        <!-- 快速新增一筆按鈕 -->
+        <button 
+          type="button"
+          @click="addCategoryBatchItem"
+          class="w-full py-2 border border-dashed border-cq-charcoal/30 hover:border-cq-charcoal rounded-xl text-cq-charcoal hover:bg-cq-wash transition text-xs font-medium flex items-center justify-center space-x-1.5 active:scale-98"
+        >
+          <i class="fa-solid fa-plus text-[10px]"></i>
+          <span>在此分類中新增一項</span>
+        </button>
+      </div>
+
+      <div class="flex space-x-2 pt-2 border-t border-cq-border/60">
+        <button 
+          type="button" 
+          @click="modalCategoryBatch.isOpen = false" 
+          class="flex-1 py-2.5 rounded-xl border border-cq-border text-cq-muted font-medium hover:bg-cq-wash text-xs"
+        >
+          取消
+        </button>
+        <button 
+          type="button" 
+          @click="submitSaveCategoryBatch" 
+          class="flex-1 py-2.5 rounded-xl bg-cq-charcoal hover:bg-black text-white font-medium active:scale-95 transition text-xs shadow-sm"
+        >
+          儲存所有變更
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 彈窗 (C): 預算項目 單一新增 Modal (保留上方預算總卡片快捷新增) -->
   <div v-if="modalBudget.isOpen" class="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
     <div class="bg-white rounded-t-3xl sm:rounded-3xl p-4 sm:p-5 w-full max-w-xs border border-cq-border shadow-xl space-y-3 max-h-[90vh] overflow-y-auto">
       <div class="flex justify-between items-center">
-        <h3 class="font-serif-cq font-bold text-sm text-cq-charcoal">
-          {{ modalBudget.isEdit ? '編輯預算項目' : '新增預算項目' }}
-        </h3>
+        <h3 class="font-serif-cq font-bold text-sm text-cq-charcoal">新增預算項目</h3>
         <button type="button" @click="modalBudget.isOpen = false" class="text-cq-muted hover:text-cq-charcoal text-xs p-1">
           <i class="fa-solid fa-xmark"></i>
         </button>
@@ -3323,6 +3425,7 @@
         // ==================== 4. 預算系統 (預設為 0，四大分類按外幣與台幣分組統計) ====================
         const budgetItems = ref([]);
 
+        // 單一預算新增彈窗 (從總覽新增)
         const modalBudget = reactive({
           isOpen: false,
           isEdit: false,
@@ -3335,6 +3438,73 @@
             notes: ''
           }
         });
+
+        // 四大分類集中管理彈窗
+        const modalCategoryBatch = reactive({
+          isOpen: false,
+          categoryKey: CATEGORY_KEYS.FIXED,
+          items: []
+        });
+
+        const getCategoryDisplayName = (cat) => {
+          if (cat === CATEGORY_KEYS.FIXED) return '固定大項開銷';
+          if (cat === CATEGORY_KEYS.TICKET) return '行程門票與體驗項目';
+          if (cat === CATEGORY_KEYS.FOOD) return '餐食預估費用';
+          if (cat === CATEGORY_KEYS.PERSONAL) return '個人限定項目';
+          return '分類預算';
+        };
+
+        const openCategoryBatchEditModal = (cat) => {
+          modalCategoryBatch.categoryKey = cat;
+          // 深度複製該分類所有項目供編輯
+          const currentList = budgetItems.value.filter(b => b.category === cat);
+          modalCategoryBatch.items = currentList.map(item => ({
+            id: item.id,
+            title: item.title,
+            amount: item.amount,
+            currency: item.currency || currentCurrency.value.code,
+            notes: item.notes || ''
+          }));
+          modalCategoryBatch.isOpen = true;
+        };
+
+        const addCategoryBatchItem = () => {
+          modalCategoryBatch.items.push({
+            id: 'bdg-' + Date.now() + '-' + Math.random().toString(36).substring(2, 6),
+            title: '',
+            amount: null,
+            currency: currentCurrency.value.code,
+            notes: ''
+          });
+        };
+
+        const removeCategoryBatchItem = (index) => {
+          modalCategoryBatch.items.splice(index, 1);
+        };
+
+        const submitSaveCategoryBatch = () => {
+          const cat = modalCategoryBatch.categoryKey;
+          // 過濾掉未輸入名稱或金額為 0 的無效行
+          const validCleanItems = modalCategoryBatch.items
+            .filter(i => (i.title || '').trim() && Number(i.amount) > 0)
+            .map(i => ({
+              id: i.id || ('bdg-' + Date.now() + '-' + Math.random().toString(36).substring(2, 6)),
+              category: cat,
+              title: i.title.trim(),
+              amount: parseFloat(i.amount),
+              currency: i.currency,
+              notes: (i.notes || '').trim()
+            }));
+
+          // 將該分類原本的項目替換為新編輯後的項目，其餘分類項目維持不變
+          budgetItems.value = [
+            ...budgetItems.value.filter(b => b.category !== cat),
+            ...validCleanItems
+          ];
+
+          modalCategoryBatch.isOpen = false;
+          showToast(`已更新「${getCategoryDisplayName(cat)}」預算項目！`);
+        };
 
         const openAddBudgetModal = () => {
           modalBudget.isEdit = false;
@@ -3349,12 +3519,6 @@
           modalBudget.isOpen = true;
         };
 
-        const openEditBudgetModal = (item) => {
-          modalBudget.isEdit = true;
-          modalBudget.form = { ...item };
-          modalBudget.isOpen = true;
-        };
-
         const submitSaveBudget = () => {
           const f = modalBudget.form;
           if (!f.title.trim()) {
@@ -3366,26 +3530,16 @@
             return;
           }
 
-          if (modalBudget.isEdit) {
-            const idx = budgetItems.value.findIndex(b => b.id === f.id);
-            if (idx !== -1) {
-              budgetItems.value[idx] = { ...f, amount: parseFloat(f.amount) };
-            }
-            showToast('預算項目已更新');
-          } else {
-            budgetItems.value.push({
-              id: 'bdg-' + Date.now(),
-              ...f,
-              amount: parseFloat(f.amount)
-            });
-            showToast('已新增預算項目');
-          }
+          budgetItems.value.push({
+            id: 'bdg-' + Date.now(),
+            category: f.category,
+            title: f.title.trim(),
+            amount: parseFloat(f.amount),
+            currency: f.currency,
+            notes: f.notes ? f.notes.trim() : ''
+          });
+          showToast('已新增預算項目');
           modalBudget.isOpen = false;
-        };
-
-        const deleteBudgetItem = (id) => {
-          budgetItems.value = budgetItems.value.filter(b => b.id !== id);
-          showToast('已刪除預算項目');
         };
 
         const getItemsByCategory = (cat) => {
@@ -4151,9 +4305,13 @@
           budgetItems,
           modalBudget,
           openAddBudgetModal,
-          openEditBudgetModal,
           submitSaveBudget,
-          deleteBudgetItem,
+          modalCategoryBatch,
+          getCategoryDisplayName,
+          openCategoryBatchEditModal,
+          addCategoryBatchItem,
+          removeCategoryBatchItem,
+          submitSaveCategoryBatch,
           getItemsByCategory,
           getCategoryGroupedItems,
           getCategoryTotalTwd,
