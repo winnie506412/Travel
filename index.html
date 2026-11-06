@@ -5,6 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>旅遊手帳</title>
   
+  <!-- PWA Web App Meta 支援 -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="旅遊手帳">
+  <meta name="theme-color" content="#F7F5F0">
+
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   
@@ -144,9 +150,12 @@
       </div>
 
       <!-- 離線就緒標籤 -->
-      <span class="text-[9px] font-mono px-2 py-0.5 rounded-full font-semibold border flex items-center space-x-1 bg-cq-wash text-cq-charcoal border-cq-border flex-shrink-0">
-        <span class="w-1.5 h-1.5 rounded-full bg-cq-moss"></span>
-        <span>離線可用</span>
+      <span 
+        class="text-[9px] font-mono px-2 py-0.5 rounded-full font-semibold border flex items-center space-x-1.5 flex-shrink-0 transition-colors"
+        :class="isOnline ? 'bg-cq-mossLight text-cq-moss border-cq-moss/30' : 'bg-amber-100 text-amber-800 border-amber-300'"
+      >
+        <span class="w-1.5 h-1.5 rounded-full animate-pulse" :class="isOnline ? 'bg-cq-moss' : 'bg-amber-500'"></span>
+        <span>{{ isOnline ? '已連線同步' : '離線模式 · 隨開隨用' }}</span>
       </span>
     </div>
 
@@ -1284,7 +1293,7 @@
 
         <div class="space-y-3">
           <div 
-            v-for="food in foodList" 
+            v-for="food in sortedFoodList" 
             :key="food.id"
             class="bg-white rounded-2xl p-3.5 border border-cq-border shadow-sm flex flex-col transition"
             :class="food.isChecked ? 'opacity-70 bg-cq-wash/30' : ''"
@@ -1432,7 +1441,7 @@
 
         <div class="space-y-2.5">
           <div 
-            v-for="item in filteredSnacksList" 
+            v-for="item in sortedSnacksList" 
             :key="item.id"
             class="bg-white rounded-2xl p-3.5 border border-cq-border shadow-sm flex space-x-3 transition"
             :class="item.isChecked ? 'opacity-70 bg-cq-wash/30' : ''"
@@ -1573,6 +1582,40 @@
     </section>
 
   </main>
+
+  <!-- PWA 安裝至桌面小提示 (iOS / Android 提示條) -->
+  <transition name="fade">
+    <div 
+      v-if="showInstallPrompt && deferredPrompt" 
+      class="fixed bottom-20 left-4 right-4 z-40 max-w-sm mx-auto bg-white/95 backdrop-blur-md rounded-2xl p-3 border border-cq-border shadow-xl flex items-center justify-between"
+    >
+      <div class="flex items-center space-x-2.5 min-w-0">
+        <div class="w-8 h-8 rounded-xl bg-cq-wash border border-cq-border flex items-center justify-center text-cq-cinnabar flex-shrink-0">
+          <i class="fa-solid fa-mobile-screen-button text-sm"></i>
+        </div>
+        <div class="min-w-0">
+          <h4 class="text-xs font-serif-cq font-bold text-cq-charcoal truncate">安裝為手機桌面 App</h4>
+          <p class="text-[10px] text-cq-muted truncate">飛航模式隨開隨看，免開瀏覽器</p>
+        </div>
+      </div>
+      <div class="flex items-center space-x-1 flex-shrink-0">
+        <button 
+          type="button" 
+          @click="installApp"
+          class="px-2.5 py-1 bg-cq-charcoal text-white rounded-lg text-xs font-serif-cq hover:bg-black active:scale-95 transition"
+        >
+          安裝
+        </button>
+        <button 
+          type="button" 
+          @click="showInstallPrompt = false" 
+          class="p-1 text-cq-muted hover:text-cq-charcoal text-xs"
+        >
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+    </div>
+  </transition>
 
   <!-- 底部固定導覽列 (4 分頁) -->
   <nav class="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-cq-border py-2 px-4 safe-bottom w-full shadow-lg">
@@ -2982,6 +3025,68 @@
     PERSONAL: 'personal'
   };
 
+  // 離線快取儲存鍵名常數
+  const STORAGE_KEYS = {
+    TRIP_DATA: 'cq_trip_full_offline_state_v1',
+    INSTALL_DISMISSED: 'cq_pwa_install_dismissed'
+  };
+
+  // 註冊 Service Worker (離線 App 支援)
+  const registerOfflineServiceWorker = () => {
+    if ('serviceWorker' in navigator && window.location.protocol.startsWith('http')) {
+      const swCode = `
+        const CACHE_NAME = 'travel-notebook-v1';
+        const OFFLINE_URLS = [
+          'https://cdn.tailwindcss.com',
+          'https://cdnjs.cloudflare.com/ajax/libs/vue/3.4.21/vue.global.prod.min.js',
+          'https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js',
+          'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css'
+        ];
+
+        self.addEventListener('install', (e) => {
+          e.waitUntil(
+            caches.open(CACHE_NAME).then((cache) => {
+              return cache.addAll(OFFLINE_URLS).catch(() => {});
+            }).then(() => self.skipWaiting())
+          );
+        });
+
+        self.addEventListener('activate', (e) => {
+          e.waitUntil(
+            caches.keys().then((keys) => {
+              return Promise.all(
+                keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k))
+              );
+            }).then(() => self.clients.claim())
+          );
+        });
+
+        self.addEventListener('fetch', (e) => {
+          if (e.request.method !== 'GET') return;
+          e.respondWith(
+            caches.match(e.request).then((cached) => {
+              if (cached) return cached;
+              return fetch(e.request).then((response) => {
+                if (response && response.status === 200 && response.type === 'cors') {
+                  const resClone = response.clone();
+                  caches.open(CACHE_NAME).then((cache) => cache.put(e.request, resClone));
+                }
+                return response;
+              }).catch(() => cached);
+            })
+          );
+        });
+      `;
+      try {
+        const blob = new Blob([swCode], { type: 'application/javascript' });
+        const swUrl = URL.createObjectURL(blob);
+        navigator.serviceWorker.register(swUrl).catch((err) => {
+          console.debug('ServiceWorker registered in fallback mode');
+        });
+      } catch (e) {}
+    }
+  };
+
   const startApp = () => {
     if (typeof Vue === 'undefined') {
       setTimeout(startApp, 60);
@@ -2995,6 +3100,33 @@
         const activeTab = ref('itinerary');
         const foodSubTab = ref('food');
         const selectedDayIndex = ref(0);
+
+        // 離線連線監聽狀態
+        const isOnline = ref(navigator.onLine !== false);
+        window.addEventListener('online', () => { isOnline.value = true; });
+        window.addEventListener('offline', () => { isOnline.value = false; });
+
+        // PWA 安裝事件監聽
+        const deferredPrompt = ref(null);
+        const showInstallPrompt = ref(false);
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+          e.preventDefault();
+          deferredPrompt.value = e;
+          if (!localStorage.getItem(STORAGE_KEYS.INSTALL_DISMISSED)) {
+            showInstallPrompt.value = true;
+          }
+        });
+
+        const installApp = async () => {
+          if (!deferredPrompt.value) return;
+          deferredPrompt.value.prompt();
+          const { outcome } = await deferredPrompt.value.userChoice;
+          if (outcome === 'accepted') {
+            showInstallPrompt.value = false;
+          }
+          deferredPrompt.value = null;
+        };
 
         // ==================== 0. 行程天數列表 ====================
         const daysList = ref([
@@ -3033,36 +3165,11 @@
         });
 
         // ==================== 1. 旅遊主題與日程標記自訂 ====================
-        const LOCAL_KEY_TRIP_META = 'cq_trip_meta_v2';
-        let initialMeta = {
+        const tripMeta = reactive({
           title: '旅遊手帳',
           startDate: '2026-10-27',
           endDate: '2026-11-03',
           scheduleNote: '2026.10.27 - 11.03 · 8天7夜'
-        };
-
-        try {
-          const cachedMeta = localStorage.getItem(LOCAL_KEY_TRIP_META);
-          if (cachedMeta) {
-            const parsedMeta = JSON.parse(cachedMeta);
-            if (parsedMeta && typeof parsedMeta.title === 'string' && parsedMeta.title.trim()) {
-              initialMeta = {
-                title: parsedMeta.title.trim() || '旅遊手帳',
-                startDate: parsedMeta.startDate || '2026-10-27',
-                endDate: parsedMeta.endDate || '2026-11-03',
-                scheduleNote: parsedMeta.scheduleNote || '2026.10.27 - 11.03 · 8天7夜'
-              };
-            }
-          }
-        } catch (e) {
-          console.warn('無法讀取本地主題快取', e);
-        }
-
-        const tripMeta = reactive({
-          title: initialMeta.title,
-          startDate: initialMeta.startDate,
-          endDate: initialMeta.endDate,
-          scheduleNote: initialMeta.scheduleNote
         });
 
         const modalTripTitle = reactive({
@@ -3165,25 +3272,15 @@
             }
           }
 
-          try {
-            localStorage.setItem(LOCAL_KEY_TRIP_META, JSON.stringify({
-              title: tripMeta.title,
-              startDate: tripMeta.startDate,
-              endDate: tripMeta.endDate,
-              scheduleNote: tripMeta.scheduleNote
-            }));
-          } catch (e) {
-            console.warn('儲存主題至本地失敗', e);
-          }
-
-          document.title = `${newTitle} · 霧都漫步手帳 2026`;
+          saveAllToOfflineStorage();
+          document.title = `${newTitle} · 旅遊手帳`;
           modalTripTitle.isOpen = false;
-          showToast('旅遊主題、日程與行程表已自動同步更新！');
+          showToast('旅遊主題、日程與行程表已儲存至離線快取！');
         };
 
         watch(() => tripMeta.title, (newTitle) => {
           if (newTitle) {
-            document.title = `${newTitle} · 霧都漫步手帳 2026`;
+            document.title = `${newTitle} · 旅遊手帳`;
           }
         }, { immediate: true });
 
@@ -3256,11 +3353,15 @@
             fetchLiveExchangeRate(false);
           }
           fetchCityWeather(city.lat, city.lng);
+          saveAllToOfflineStorage();
           showToast(`已切換至城市：${city.name}`);
           modalCityWeather.isOpen = false;
         };
 
         const fetchCityWeather = async (lat, lng) => {
+          if (!navigator.onLine) {
+            return; // 離線時保持上次快取之氣溫與狀態
+          }
           try {
             const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,weather_code`);
             const data = await res.json();
@@ -3273,16 +3374,20 @@
               else if (code <= 67) weather.condition = '細雨微潤';
               else if (code <= 77) weather.condition = '飄雪降溫';
               else weather.condition = '陣雨綿綿';
+              saveAllToOfflineStorage();
             }
           } catch (e) {
-            weather.temp = 21;
-            weather.condition = '天氣晴和';
+            // 離線保留現有值
           }
         };
 
         const searchCityGeocoding = async () => {
           const q = citySearchQuery.value.trim();
           if (!q) return;
+          if (!navigator.onLine) {
+            citySearchStatus.value = '離線模式下無法搜尋新城市，請連線後重試';
+            return;
+          }
           citySearchStatus.value = '正在搜尋城市...';
           try {
             const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=1&language=zh`);
@@ -3297,6 +3402,7 @@
               };
               currentCity.value = newCity;
               await fetchCityWeather(newCity.lat, newCity.lng);
+              saveAllToOfflineStorage();
               citySearchStatus.value = '';
               showToast(`已切換至 ${newCity.name}`);
               modalCityWeather.isOpen = false;
@@ -3309,7 +3415,6 @@
         };
 
         // ==================== 3. 貨幣與即時匯率系統 ====================
-        const LOCAL_KEY_CUSTOM_CURRENCIES = 'cq_custom_currencies_v1';
         const defaultCurrencies = [
           { code: 'CNY', symbol: '¥', name: '人民幣' },
           { code: 'JPY', symbol: '¥', name: '日圓' },
@@ -3322,15 +3427,7 @@
           { code: 'TWD', symbol: 'NT$', name: '新台幣' }
         ];
 
-        let storedCustomCurrencies = [];
-        try {
-          const cached = localStorage.getItem(LOCAL_KEY_CUSTOM_CURRENCIES);
-          if (cached) {
-            storedCustomCurrencies = JSON.parse(cached);
-          }
-        } catch (e) {}
-
-        const availableCurrencies = ref([...defaultCurrencies, ...storedCustomCurrencies]);
+        const availableCurrencies = ref([...defaultCurrencies]);
         const currentCurrency = ref({ code: 'CNY', symbol: '¥', name: '人民幣' });
         const exchangeRate = ref(4.52);
         const modalCurrency = reactive({ isOpen: false });
@@ -3351,6 +3448,7 @@
         const selectCurrency = (curr) => {
           currentCurrency.value = { ...curr };
           fetchLiveExchangeRate(true);
+          saveAllToOfflineStorage();
           modalCurrency.isOpen = false;
         };
 
@@ -3363,6 +3461,23 @@
           }
           if (availableCurrencies.value.some(c => c.code === code)) {
             customCurrencyError.value = `貨幣代碼 ${code} 已存在於列表中`;
+            return;
+          }
+
+          if (!navigator.onLine) {
+            // 離線模式支援手動新增並給予預設 1:1 匯率
+            const newCurr = {
+              code: code,
+              symbol: customCurrencyForm.symbol.trim() || code,
+              name: customCurrencyForm.name.trim() || code,
+              isCustom: true
+            };
+            availableCurrencies.value.push(newCurr);
+            currentCurrency.value = newCurr;
+            exchangeRate.value = 1.0;
+            saveAllToOfflineStorage();
+            showToast(`離線模式已新增 ${code}，已設定預設匯率 1:1`);
+            modalCurrency.isOpen = false;
             return;
           }
 
@@ -3384,12 +3499,6 @@
             };
 
             availableCurrencies.value.push(newCurr);
-
-            const customList = availableCurrencies.value.filter(c => c.isCustom);
-            try {
-              localStorage.setItem(LOCAL_KEY_CUSTOM_CURRENCIES, JSON.stringify(customList));
-            } catch (e) {}
-
             currentCurrency.value = newCurr;
             exchangeRate.value = liveRate;
 
@@ -3397,6 +3506,7 @@
             customCurrencyForm.symbol = '';
             customCurrencyForm.name = '';
 
+            saveAllToOfflineStorage();
             showToast(`成功新增 ${code}！即時匯率：1 ${code} ≈ ${liveRate.toFixed(4)} TWD`);
           } catch (err) {
             customCurrencyError.value = `連線查詢失敗，請確認代碼是否正確 (如 SGD, AUD, MYR, GBP)`;
@@ -3407,15 +3517,11 @@
 
         const removeCustomCurrency = (code) => {
           availableCurrencies.value = availableCurrencies.value.filter(c => c.code !== code);
-          const customList = availableCurrencies.value.filter(c => c.isCustom);
-          try {
-            localStorage.setItem(LOCAL_KEY_CUSTOM_CURRENCIES, JSON.stringify(customList));
-          } catch (e) {}
-
           if (currentCurrency.value.code === code) {
             currentCurrency.value = availableCurrencies.value[0];
             fetchLiveExchangeRate(false);
           }
+          saveAllToOfflineStorage();
           showToast(`已移除幣別 ${code}`);
         };
 
@@ -3425,22 +3531,26 @@
             if (showNotification) showToast('已設定為基準新台幣 (1:1)');
             return;
           }
+          if (!navigator.onLine) {
+            if (showNotification) showToast(`目前處於離線狀態，使用快取匯率 1:${exchangeRate.value.toFixed(2)}`);
+            return;
+          }
           try {
             const res = await fetch(`https://open.er-api.com/v6/latest/${currentCurrency.value.code}`);
             const data = await res.json();
             if (data && data.rates && data.rates.TWD) {
               exchangeRate.value = parseFloat(data.rates.TWD.toFixed(4));
+              saveAllToOfflineStorage();
               if (showNotification) showToast(`已更新匯率：1 ${currentCurrency.value.code} ≈ ${exchangeRate.value.toFixed(2)} TWD`);
             }
           } catch (e) {
-            console.warn('匯率連線保留預估數值');
+            // 離線保留快取匯率
           }
         };
 
-        // ==================== 4. 預算系統 (預設為 0，四大分類按外幣與台幣分組統計) ====================
+        // ==================== 4. 預算系統 (離線即時計算與持久化) ====================
         const budgetItems = ref([]);
 
-        // 單一預算新增彈窗 (從總覽新增)
         const modalBudget = reactive({
           isOpen: false,
           isEdit: false,
@@ -3454,7 +3564,6 @@
           }
         });
 
-        // 四大分類集中管理彈窗
         const modalCategoryBatch = reactive({
           isOpen: false,
           categoryKey: CATEGORY_KEYS.FIXED,
@@ -3514,8 +3623,9 @@
             ...validCleanItems
           ];
 
+          saveAllToOfflineStorage();
           modalCategoryBatch.isOpen = false;
-          showToast(`已更新「${getCategoryDisplayName(cat)}」預算項目！`);
+          showToast(`已儲存「${getCategoryDisplayName(cat)}」至離線帳本！`);
         };
 
         const openAddBudgetModal = () => {
@@ -3550,6 +3660,7 @@
             currency: f.currency,
             notes: f.notes ? f.notes.trim() : ''
           });
+          saveAllToOfflineStorage();
           showToast('已新增預算項目');
           modalBudget.isOpen = false;
         };
@@ -3558,7 +3669,6 @@
           return budgetItems.value.filter(b => b.category === cat);
         };
 
-        // 依據外幣與台幣自動分組並排序
         const getCategoryGroupedItems = (cat) => {
           const all = getItemsByCategory(cat);
           const foreign = all.filter(i => i.currency !== 'TWD');
@@ -3600,14 +3710,13 @@
           return exchangeRate.value > 0 ? (totalBudgetTwd.value / exchangeRate.value) : 0;
         });
 
-        // 預估兌換外幣需求 (只合計目的地外幣項目，不含台幣)
         const totalForeignCurrencyNeeded = computed(() => {
           return budgetItems.value
             .filter(b => b.currency !== 'TWD')
             .reduce((sum, b) => sum + Number(b.amount || 0), 0);
         });
 
-        // ==================== 5. 機酒保險 (24小時制，保留班機號碼) ====================
+        // ==================== 5. 機酒保險 (離線快速查閱) ====================
         const stayInfo = ref({
           hotelName: '霧嶼·高空美宿（重慶解放碑步行街洪崖洞店）',
           staySummary: '7 晚連住',
@@ -3634,8 +3743,9 @@
 
         const submitSaveStay = () => {
           stayInfo.value = { ...modalStay.form };
+          saveAllToOfflineStorage();
           modalStay.isOpen = false;
-          showToast('住宿資訊已更新');
+          showToast('住宿資訊已更新至離線記憶');
         };
 
         const flightInfo = ref({
@@ -3643,7 +3753,6 @@
           subtitle: 'HONG KONG AIRLINES · 轉機1次',
           tagText: '行李直掛',
           
-          // 去程
           outboundDate: '2026-10-27',
           outboundHasTransfer: true,
           outboundIsSameTerminal: false,
@@ -3666,7 +3775,6 @@
           outboundLeg2ArrCode: 'CKG',
           outboundLeg2ArrAirport: '重慶江北 T3',
 
-          // 回程
           inboundDate: '2026-11-03',
           inboundHasTransfer: true,
           inboundIsSameTerminal: true,
@@ -3706,8 +3814,9 @@
 
         const submitSaveFlight = () => {
           flightInfo.value = { ...modalFlight.form };
+          saveAllToOfflineStorage();
           modalFlight.isOpen = false;
-          showToast('機票航程已更新');
+          showToast('機票航程已更新至離線記憶');
         };
 
         const insuranceInfo = ref({
@@ -3734,8 +3843,9 @@
 
         const submitSaveInsurance = () => {
           insuranceInfo.value = { ...modalInsurance.form };
+          saveAllToOfflineStorage();
           modalInsurance.isOpen = false;
-          showToast('保險內容已更新');
+          showToast('保險內容已更新至離線記憶');
         };
 
         const roamingInfo = ref({
@@ -3762,11 +3872,11 @@
 
         const submitSaveRoaming = () => {
           roamingInfo.value = { ...modalRoaming.form };
+          saveAllToOfflineStorage();
           modalRoaming.isOpen = false;
-          showToast('網路漫遊資訊已更新');
+          showToast('網路漫遊資訊已更新至離線記憶');
         };
 
-        // 飲品小吃分類
         const snackFilterType = ref('ALL');
 
         // Toast 輕量提示
@@ -3819,7 +3929,7 @@
             }));
 
             const payload = JSON.stringify({
-              v: 8,
+              v: 9,
               tripMeta: {
                 title: tripMeta.title,
                 startDate: tripMeta.startDate,
@@ -3833,7 +3943,10 @@
               stay: stayInfo.value,
               flight: flightInfo.value,
               insurance: insuranceInfo.value,
-              roaming: roamingInfo.value
+              roaming: roamingInfo.value,
+              food: foodList.value,
+              snacks: snacksList.value,
+              backup: backupSpots.value
             });
 
             let encoded = '';
@@ -3847,10 +3960,81 @@
             const shareUrl = `${currentUrl}#itinerary=${encoded}`;
 
             copyText(shareUrl);
-            showToast('已複製行程分享連結！朋友開啟即可看到主題、行程與預算');
+            showToast('已複製行程分享連結！朋友開啟即可離線存取完整手帳');
           } catch (err) {
             console.error('行程分享產生錯誤:', err);
             showToast('產生分享連結失敗，請稍候再試');
+          }
+        };
+
+        // 離線快取儲存中樞 (Auto Offline Persistence)
+        const saveAllToOfflineStorage = () => {
+          try {
+            const fullState = {
+              tripMeta: {
+                title: tripMeta.title,
+                startDate: tripMeta.startDate,
+                endDate: tripMeta.endDate,
+                scheduleNote: tripMeta.scheduleNote
+              },
+              daysList: daysList.value,
+              budgetItems: budgetItems.value,
+              currentCity: currentCity.value,
+              weather: weather,
+              currentCurrency: currentCurrency.value,
+              availableCurrencies: availableCurrencies.value,
+              exchangeRate: exchangeRate.value,
+              stayInfo: stayInfo.value,
+              flightInfo: flightInfo.value,
+              insuranceInfo: insuranceInfo.value,
+              roamingInfo: roamingInfo.value,
+              foodList: foodList.value,
+              snacksList: snacksList.value,
+              backupSpots: backupSpots.value,
+              updatedAt: Date.now()
+            };
+            localStorage.setItem(STORAGE_KEYS.TRIP_DATA, JSON.stringify(fullState));
+          } catch (e) {
+            console.warn('離線寫入快取失敗', e);
+          }
+        };
+
+        // 讀取離線快取
+        const loadOfflineStorage = () => {
+          try {
+            const cached = localStorage.getItem(STORAGE_KEYS.TRIP_DATA);
+            if (!cached) return false;
+            const s = JSON.parse(cached);
+            if (!s) return false;
+
+            if (s.tripMeta) {
+              tripMeta.title = s.tripMeta.title || tripMeta.title;
+              tripMeta.startDate = s.tripMeta.startDate || tripMeta.startDate;
+              tripMeta.endDate = s.tripMeta.endDate || tripMeta.endDate;
+              tripMeta.scheduleNote = s.tripMeta.scheduleNote || tripMeta.scheduleNote;
+            }
+            if (Array.isArray(s.daysList) && s.daysList.length > 0) daysList.value = s.daysList;
+            if (Array.isArray(s.budgetItems)) budgetItems.value = s.budgetItems;
+            if (s.currentCity) currentCity.value = s.currentCity;
+            if (s.weather) {
+              weather.temp = s.weather.temp ?? weather.temp;
+              weather.condition = s.weather.condition || weather.condition;
+            }
+            if (s.currentCurrency) currentCurrency.value = s.currentCurrency;
+            if (Array.isArray(s.availableCurrencies)) availableCurrencies.value = s.availableCurrencies;
+            if (typeof s.exchangeRate === 'number') exchangeRate.value = s.exchangeRate;
+            if (s.stayInfo) stayInfo.value = s.stayInfo;
+            if (s.flightInfo) flightInfo.value = s.flightInfo;
+            if (s.insuranceInfo) insuranceInfo.value = s.insuranceInfo;
+            if (s.roamingInfo) roamingInfo.value = s.roamingInfo;
+            if (Array.isArray(s.foodList)) foodList.value = s.foodList;
+            if (Array.isArray(s.snacksList)) snacksList.value = s.snacksList;
+            if (Array.isArray(s.backupSpots)) backupSpots.value = s.backupSpots;
+
+            return true;
+          } catch (e) {
+            console.warn('讀取離線快取失敗', e);
+            return false;
           }
         };
 
@@ -3858,10 +4042,10 @@
         const checkIncomingShareUrl = () => {
           try {
             const hash = window.location.hash;
-            if (!hash || !hash.includes('itinerary=')) return;
+            if (!hash || !hash.includes('itinerary=')) return false;
 
             const encoded = hash.split('itinerary=')[1];
-            if (!encoded) return;
+            if (!encoded) return false;
 
             let jsonStr = '';
             if (window.LZString) {
@@ -3870,7 +4054,7 @@
               jsonStr = decodeURIComponent(encoded);
             }
 
-            if (!jsonStr) return;
+            if (!jsonStr) return false;
             const parsed = JSON.parse(jsonStr);
 
             if (parsed) {
@@ -3879,9 +4063,6 @@
                 if (parsed.tripMeta.startDate) tripMeta.startDate = parsed.tripMeta.startDate;
                 if (parsed.tripMeta.endDate) tripMeta.endDate = parsed.tripMeta.endDate;
                 if (parsed.tripMeta.scheduleNote) tripMeta.scheduleNote = parsed.tripMeta.scheduleNote;
-                try {
-                  localStorage.setItem(LOCAL_KEY_TRIP_META, JSON.stringify(tripMeta));
-                } catch (e) {}
               }
               if (Array.isArray(parsed.days) && parsed.days.length > 0) daysList.value = parsed.days;
               if (parsed.city) currentCity.value = parsed.city;
@@ -3891,11 +4072,18 @@
               if (parsed.flight) flightInfo.value = parsed.flight;
               if (parsed.insurance) insuranceInfo.value = parsed.insurance;
               if (parsed.roaming) roamingInfo.value = parsed.roaming;
-              showToast('已成功載入分享的主題、行程、預算與機酒保險資訊！');
+              if (Array.isArray(parsed.food)) foodList.value = parsed.food;
+              if (Array.isArray(parsed.snacks)) snacksList.value = parsed.snacks;
+              if (Array.isArray(parsed.backup)) backupSpots.value = parsed.backup;
+
+              saveAllToOfflineStorage();
+              showToast('已成功載入分享內容並同步至離線快取！');
+              return true;
             }
           } catch (e) {
             console.warn('載入分享行程失敗:', e);
           }
+          return false;
         };
 
         // 天數管理 Modal
@@ -3946,6 +4134,7 @@
             selectedDayIndex.value = daysList.value.length - 1;
             showToast(`已新增 ${modalDay.form.dayCode} 日程`);
           }
+          saveAllToOfflineStorage();
           modalDay.isOpen = false;
         };
 
@@ -3959,6 +4148,7 @@
           if (selectedDayIndex.value >= daysList.value.length) {
             selectedDayIndex.value = daysList.value.length - 1;
           }
+          saveAllToOfflineStorage();
           showToast(`已刪除 ${deletedCode} 日程`);
         };
 
@@ -4027,7 +4217,7 @@
             showToast('正在壓縮照片中...');
             const compressedBase64 = await compressImage(file, 600, 0.65);
             modalEvent.form.image = compressedBase64;
-            showToast('照片已上傳成功');
+            showToast('照片已就緒');
           } catch (e) {
             showToast('照片處理失敗，請重試');
           }
@@ -4052,13 +4242,15 @@
               ...modalEvent.form
             });
           }
+          saveAllToOfflineStorage();
           modalEvent.isOpen = false;
-          showToast('行程站點已儲存');
+          showToast('行程站點已儲存至離線快取');
         };
 
         const deleteEvent = (id) => {
           if (!currentDay.value) return;
           currentDay.value.events = currentDay.value.events.filter(e => e.id !== id);
+          saveAllToOfflineStorage();
           showToast('已刪除行程站點');
         };
 
@@ -4090,8 +4282,29 @@
           }
         ]);
 
+        // 依分類排序，且若已打卡則自動沉底排至最下方
+        const sortedFoodList = computed(() => {
+          return [...foodList.value].sort((a, b) => {
+            // 1. 已打卡項目移至最底端
+            if (a.isChecked !== b.isChecked) {
+              return a.isChecked ? 1 : -1;
+            }
+            // 2. 依美食分類排序
+            const catA = (a.category || '').trim();
+            const catB = (b.category || '').trim();
+            const catCompare = catA.localeCompare(catB, 'zh-TW');
+            if (catCompare !== 0) return catCompare;
+
+            // 3. 同分類內依名稱排序
+            return (a.name || '').localeCompare(b.name || '', 'zh-TW');
+          });
+        });
+
         const checkedInFoodCount = computed(() => foodList.value.filter(f => f.isChecked).length);
-        const toggleFoodCheck = (food) => { food.isChecked = !food.isChecked; };
+        const toggleFoodCheck = (food) => {
+          food.isChecked = !food.isChecked;
+          saveAllToOfflineStorage();
+        };
 
         const modalFood = reactive({
           isOpen: false,
@@ -4146,12 +4359,14 @@
           } else {
             foodList.value.unshift({ id: 'f-' + Date.now(), ...modalFood.form, recommendations: recs, isChecked: false });
           }
+          saveAllToOfflineStorage();
           modalFood.isOpen = false;
-          showToast('推薦餐廳已更新');
+          showToast('推薦餐廳已儲存至離線快取');
         };
 
         const deleteFood = (id) => {
           foodList.value = foodList.value.filter(f => f.id !== id);
+          saveAllToOfflineStorage();
           showToast('已刪除推薦餐廳');
         };
 
@@ -4173,7 +4388,29 @@
           return snacksList.value.filter(s => s.type === snackFilterType.value);
         });
 
-        const toggleSnackCheck = (item) => { item.isChecked = !item.isChecked; };
+        // 飲品小吃排序：已打卡沉底，未打卡依分類與名稱排序
+        const sortedSnacksList = computed(() => {
+          return [...filteredSnacksList.value].sort((a, b) => {
+            // 1. 已打卡項目移至最下方
+            if (a.isChecked !== b.isChecked) {
+              return a.isChecked ? 1 : -1;
+            }
+            // 2. 依分類類型排序 (drink -> snackFood -> snack)
+            const typePriority = { drink: 1, snackFood: 2, snack: 3 };
+            const priorityA = typePriority[a.type] || 99;
+            const priorityB = typePriority[b.type] || 99;
+            if (priorityA !== priorityB) {
+              return priorityA - priorityB;
+            }
+            // 3. 同分類依名稱排序
+            return (a.name || '').localeCompare(b.name || '', 'zh-TW');
+          });
+        });
+
+        const toggleSnackCheck = (item) => {
+          item.isChecked = !item.isChecked;
+          saveAllToOfflineStorage();
+        };
 
         const modalSnack = reactive({
           isOpen: false,
@@ -4211,12 +4448,14 @@
           } else {
             snacksList.value.unshift({ id: 's-' + Date.now(), ...modalSnack.form, recommendations: recs, isChecked: false });
           }
+          saveAllToOfflineStorage();
           modalSnack.isOpen = false;
-          showToast('品項已儲存');
+          showToast('品項已儲存至離線快取');
         };
 
         const deleteSnack = (id) => {
           snacksList.value = snacksList.value.filter(s => s.id !== id);
+          saveAllToOfflineStorage();
           showToast('已刪除品項');
         };
 
@@ -4258,12 +4497,14 @@
           } else {
             backupSpots.value.push({ id: 'b-' + Date.now(), ...modalBackup.form });
           }
+          saveAllToOfflineStorage();
           modalBackup.isOpen = false;
-          showToast('備用景點已更新');
+          showToast('備用景點已更新至離線快取');
         };
 
         const deleteBackupSpot = (id) => {
           backupSpots.value = backupSpots.value.filter(b => b.id !== id);
+          saveAllToOfflineStorage();
           showToast('已刪除備用景點');
         };
 
@@ -4272,12 +4513,27 @@
         };
 
         onMounted(() => {
+          // 1. 先註冊離線 Service Worker
+          registerOfflineServiceWorker();
+
+          // 2. 嘗試先讀取本機快取
+          const hasLocalData = loadOfflineStorage();
+
+          // 3. 檢查是否有外部分享連結導入 (若有則優先採用並覆蓋存入本機)
           checkIncomingShareUrl();
-          fetchLiveExchangeRate(false);
-          fetchCityWeather(currentCity.value.lat, currentCity.value.lng);
+
+          // 4. 若有網路則嘗試更新即時匯率與天氣，若斷網則自動優雅略過保持現有數值
+          if (navigator.onLine) {
+            fetchLiveExchangeRate(false);
+            fetchCityWeather(currentCity.value.lat, currentCity.value.lng);
+          }
         });
 
         return {
+          isOnline,
+          showInstallPrompt,
+          deferredPrompt,
+          installApp,
           tripMeta,
           modalTripTitle,
           computedSchedulePreview,
@@ -4368,12 +4624,14 @@
           onFoodPhotoUpload,
           submitSaveFood,
           deleteFood,
+          sortedFoodList,
           snacksList,
           snackFilterType,
           snackCount,
           drinkCount,
           snackFoodCount,
           filteredSnacksList,
+          sortedSnacksList,
           toggleSnackCheck,
           modalSnack,
           openAddSnackModal,
