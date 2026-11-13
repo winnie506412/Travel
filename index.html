@@ -969,7 +969,16 @@
             </p>
           </div>
 
-          <div v-if="stay.address || stay.phone" class="flex space-x-2 pt-1">
+          <div class="flex flex-wrap gap-2 pt-1">
+            <button 
+              type="button"
+              @click="openAddStayToItinerary(stay)" 
+              class="px-3 py-2 bg-cq-wash hover:bg-cq-cinnabar hover:text-white text-cq-charcoal border border-cq-border rounded-xl text-xs font-serif-cq font-medium transition flex items-center justify-center space-x-1 active:scale-95"
+              title="將此住宿加入每日行程表"
+            >
+              <i class="fa-solid fa-calendar-plus text-[11px] text-cq-cinnabar"></i>
+              <span>加入行程</span>
+            </button>
             <button 
               type="button"
               v-if="stay.address"
@@ -1043,7 +1052,7 @@
             </div>
             <div class="space-y-1.5 text-xs font-mono">
               <!-- 去程第 1 航段 -->
-              <div class="p-2.5 bg-white rounded-xl border border-cq-border shadow-2xs">
+              <div class="p-2.5 bg-white rounded-xl border border-cq-border shadow-2xs space-y-2">
                 <div class="flex items-center justify-between">
                   <div>
                     <span class="text-[10px] text-cq-muted block">起飛</span>
@@ -1059,6 +1068,17 @@
                     <strong class="text-sm font-bold block" :class="flightInfo.outboundHasTransfer ? 'text-cq-charcoal' : 'text-cq-cinnabar'">{{ flightInfo.outboundLeg1ArrTime }} {{ flightInfo.outboundLeg1ArrCode }}</strong>
                     <span class="text-[11px] text-cq-charcoal font-sans">{{ flightInfo.outboundLeg1ArrAirport }}</span>
                   </div>
+                </div>
+                <div class="flex justify-end pt-1 border-t border-cq-border/40">
+                  <button 
+                    type="button"
+                    @click="openAddFlightSegmentToItinerary('去程', flightInfo.outboundLeg1FlightNo, flightInfo.outboundLeg1DepCode, flightInfo.outboundLeg1ArrCode, flightInfo.outboundLeg1DepTime, flightInfo.outboundLeg1DepAirport)"
+                    class="px-2 py-0.5 rounded-lg bg-cq-wash hover:bg-cq-cinnabar hover:text-white text-cq-charcoal border border-cq-border text-[11px] font-serif-cq font-medium transition flex items-center space-x-1 active:scale-95"
+                    title="將此航段加入行程時間軸"
+                  >
+                    <i class="fa-solid fa-calendar-plus text-[9px] text-cq-cinnabar group-hover:text-white"></i>
+                    <span>加入行程</span>
+                  </button>
                 </div>
               </div>
 
@@ -1094,7 +1114,7 @@
                 </div>
 
                 <!-- 去程第 2 航段 -->
-                <div class="p-2.5 bg-white rounded-xl border border-cq-border shadow-2xs">
+                <div class="p-2.5 bg-white rounded-xl border border-cq-border shadow-2xs space-y-2">
                   <div class="flex items-center justify-between">
                     <div>
                       <span class="text-[10px] text-cq-muted block">轉機出發</span>
@@ -1110,6 +1130,17 @@
                       <strong class="text-sm font-bold text-cq-cinnabar block">{{ flightInfo.outboundLeg2ArrTime }} {{ flightInfo.outboundLeg2ArrCode }}</strong>
                       <span class="text-[11px] text-cq-charcoal font-sans">{{ flightInfo.outboundLeg2ArrAirport }}</span>
                     </div>
+                  </div>
+                  <div class="flex justify-end pt-1 border-t border-cq-border/40">
+                    <button 
+                      type="button"
+                      @click="openAddFlightSegmentToItinerary('去程轉機', flightInfo.outboundLeg2FlightNo, flightInfo.outboundLeg2DepCode, flightInfo.outboundLeg2ArrCode, flightInfo.outboundLeg2DepTime, flightInfo.outboundLeg2DepAirport)"
+                      class="px-2 py-0.5 rounded-lg bg-cq-wash hover:bg-cq-cinnabar hover:text-white text-cq-charcoal border border-cq-border text-[11px] font-serif-cq font-medium transition flex items-center space-x-1 active:scale-95"
+                      title="將此航段加入行程時間軸"
+                    >
+                      <i class="fa-solid fa-calendar-plus text-[9px] text-cq-cinnabar group-hover:text-white"></i>
+                      <span>加入行程</span>
+                    </button>
                   </div>
                 </div>
               </template>
@@ -1133,7 +1164,7 @@
             </div>
             <div class="space-y-1.5 text-xs font-mono">
               <!-- 回程第 1 航段 -->
-              <div class="p-2.5 bg-white rounded-xl border border-cq-border shadow-2xs">
+              <div class="p-2.5 bg-white rounded-xl border border-cq-border shadow-2xs space-y-2">
                 <div class="flex items-center justify-between">
                   <div>
                     <span class="text-[10px] text-cq-muted block">起飛返程</span>
@@ -1149,6 +1180,17 @@
                     <strong class="text-sm font-bold block" :class="flightInfo.inboundHasTransfer ? 'text-cq-charcoal' : 'text-cq-moss'">{{ flightInfo.inboundLeg1ArrTime }} {{ flightInfo.inboundLeg1ArrCode }}</strong>
                     <span class="text-[11px] text-cq-charcoal font-sans">{{ flightInfo.inboundLeg1ArrAirport }}</span>
                   </div>
+                </div>
+                <div class="flex justify-end pt-1 border-t border-cq-border/40">
+                  <button 
+                    type="button"
+                    @click="openAddFlightSegmentToItinerary('回程', flightInfo.inboundLeg1FlightNo, flightInfo.inboundLeg1DepCode, flightInfo.inboundLeg1ArrCode, flightInfo.inboundLeg1DepTime, flightInfo.inboundLeg1DepAirport)"
+                    class="px-2 py-0.5 rounded-lg bg-cq-wash hover:bg-cq-cinnabar hover:text-white text-cq-charcoal border border-cq-border text-[11px] font-serif-cq font-medium transition flex items-center space-x-1 active:scale-95"
+                    title="將此航段加入行程時間軸"
+                  >
+                    <i class="fa-solid fa-calendar-plus text-[9px] text-cq-cinnabar group-hover:text-white"></i>
+                    <span>加入行程</span>
+                  </button>
                 </div>
               </div>
 
@@ -1184,7 +1226,7 @@
                 </div>
 
                 <!-- 回程第 2 航段 -->
-                <div class="p-2.5 bg-white rounded-xl border border-cq-border shadow-2xs">
+                <div class="p-2.5 bg-white rounded-xl border border-cq-border shadow-2xs space-y-2">
                   <div class="flex items-center justify-between">
                     <div>
                       <span class="text-[10px] text-cq-muted block">轉機起飛</span>
@@ -1200,6 +1242,17 @@
                       <strong class="text-sm font-bold text-cq-moss block">{{ flightInfo.inboundLeg2ArrTime }} {{ flightInfo.inboundLeg2ArrCode }}</strong>
                       <span class="text-[11px] text-cq-charcoal font-sans">{{ flightInfo.inboundLeg2ArrAirport }}</span>
                     </div>
+                  </div>
+                  <div class="flex justify-end pt-1 border-t border-cq-border/40">
+                    <button 
+                      type="button"
+                      @click="openAddFlightSegmentToItinerary('回程轉機', flightInfo.inboundLeg2FlightNo, flightInfo.inboundLeg2DepCode, flightInfo.inboundLeg2ArrCode, flightInfo.inboundLeg2DepTime, flightInfo.inboundLeg2DepAirport)"
+                      class="px-2 py-0.5 rounded-lg bg-cq-wash hover:bg-cq-cinnabar hover:text-white text-cq-charcoal border border-cq-border text-[11px] font-serif-cq font-medium transition flex items-center space-x-1 active:scale-95"
+                      title="將此航段加入行程時間軸"
+                    >
+                      <i class="fa-solid fa-calendar-plus text-[9px] text-cq-cinnabar group-hover:text-white"></i>
+                      <span>加入行程</span>
+                    </button>
                   </div>
                 </div>
               </template>
@@ -6434,7 +6487,7 @@
           showToast('已刪除品項');
         };
 
-        // 備用口袋景點 (初始為空白)
+        // 備用口袋景點清單 (初始為空白)
         const backupSpots = ref([]);
 
         const modalBackup = reactive({
@@ -6443,11 +6496,11 @@
           form: { id: '', name: '', tag: '景點備案', duration: '1小時', linkUrl: '', desc: '' }
         });
 
-        // ==================== 將餐廳/備用景點加入每日行程功能 ====================
+        // 將餐廳/備用景點或機票航段加入每日行程功能
         const modalAddToItinerary = reactive({
           isOpen: false,
           item: null,
-          itemType: 'food', // 'food' or 'backup'
+          itemType: 'food', // 'food', 'backup', 'flight'
           targetDayIndex: 0,
           time: '',
           duration: '1～1.5小時'
@@ -6457,9 +6510,42 @@
           modalAddToItinerary.item = item;
           modalAddToItinerary.itemType = type;
           modalAddToItinerary.targetDayIndex = selectedDayIndex.value;
-          modalAddToItinerary.time = '';
-          modalAddToItinerary.duration = item.duration || (type === 'food' ? '1～1.5小時' : '1小時');
+          if (type !== 'flight') {
+            modalAddToItinerary.time = '';
+          }
+          modalAddToItinerary.duration = item.duration || (type === 'food' ? '1～1.5小時' : (type === 'flight' ? '2小時 (機場報到)' : (type === 'stay' ? '30分鐘 (辦理入住/寄放行李)' : '1小時')));
           modalAddToItinerary.isOpen = true;
+        };
+
+        const openAddStayToItinerary = (stay) => {
+          const noteLines = [
+            stay.staySummary ? `入住期間：${stay.staySummary}` : '',
+            stay.roomType ? `房型：${stay.roomType}` : '',
+            stay.accessCode ? `門禁/密碼：${stay.accessCode}` : '',
+            stay.phone ? `電話：${stay.phone}` : '',
+            stay.notes || ''
+          ].filter(Boolean).join('\n');
+
+          const stayObj = {
+            name: `入住｜${stay.hotelName}`,
+            address: stay.address || '',
+            duration: '30分鐘 (辦理入住/寄放行李)',
+            notes: noteLines,
+            image: ''
+          };
+          openAddToItineraryModal(stayObj, 'stay');
+        };
+
+        const openAddFlightSegmentToItinerary = (directionLabel, flightNo, depCode, arrCode, depTime, depAirport) => {
+          const flightObj = {
+            name: `搭乘 ${flightNo || '班機'} 航段 (${depCode} ➔ ${arrCode})`,
+            address: depAirport || '',
+            duration: '2小時 (機場報到)',
+            notes: `班機號碼：${flightNo || '未填'}\n起飛時間：${depTime || '未填'}`,
+            image: ''
+          };
+          modalAddToItinerary.time = depTime || '';
+          openAddToItineraryModal(flightObj, 'flight');
         };
 
         const submitAddToItinerary = () => {
@@ -6472,7 +6558,7 @@
 
           let eventName = item.name;
           let eventAddress = item.address || '';
-          let eventCat = modalAddToItinerary.itemType === 'food' ? (item.category || '美食') : (item.tag || '景點');
+          let eventCat = modalAddToItinerary.itemType === 'food' ? (item.category || '美食') : (modalAddToItinerary.itemType === 'flight' ? '交通' : (modalAddToItinerary.itemType === 'stay' ? '住宿' : (item.tag || '景點')));
           let eventCost = modalAddToItinerary.itemType === 'food' ? item.priceCny : null;
           let eventImage = item.image || '';
           let eventNotes = '';
@@ -6481,7 +6567,7 @@
             const recs = item.recommendations && item.recommendations.length > 0 ? `必吃推薦：${item.recommendations.join('、')}` : '';
             eventNotes = [recs, item.note].filter(Boolean).join('\n');
           } else {
-            eventNotes = item.desc || '';
+            eventNotes = item.desc || item.notes || '';
           }
 
           targetDay.events.push({
@@ -6722,6 +6808,8 @@
           deleteBackupSpot,
           modalAddToItinerary,
           openAddToItineraryModal,
+          openAddStayToItinerary,
+          openAddFlightSegmentToItinerary,
           submitAddToItinerary,
           switchTab,
           copyText,
