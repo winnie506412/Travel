@@ -2853,9 +2853,20 @@
           <i class="fa-solid fa-plane-departure text-cq-cinnabar"></i>
           <span>編輯機票航程</span>
         </h3>
-        <button type="button" @click="modalFlight.isOpen = false" class="text-cq-muted hover:text-cq-charcoal text-xs">
-          <i class="fa-solid fa-xmark"></i>
-        </button>
+        <div class="flex items-center space-x-2">
+          <button 
+            type="button" 
+            @click="clearFlightForm" 
+            class="px-2 py-1 rounded-lg bg-cq-cinnabarLight text-cq-cinnabar hover:bg-cq-cinnabar hover:text-white text-[11px] font-serif-cq font-bold transition flex items-center space-x-1 active:scale-95"
+            title="一鍵清空所有欄位重新填寫"
+          >
+            <i class="fa-solid fa-eraser text-[10px]"></i>
+            <span>清空重填</span>
+          </button>
+          <button type="button" @click="modalFlight.isOpen = false" class="text-cq-muted hover:text-cq-charcoal text-xs p-1">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
       </div>
 
       <div class="space-y-3 text-xs">
@@ -2883,7 +2894,7 @@
               <span>去程航班設定</span>
             </span>
             <label class="flex items-center space-x-1 text-[11px] cursor-pointer text-cq-charcoal select-none font-medium">
-              <input type="checkbox" v-model="modalFlight.form.outboundHasTransfer" class="rounded accent-cq-cinnabar">
+              <input type="checkbox" v-model="modalFlight.form.outboundHasTransfer" @change="recalcLayoverDurations" class="rounded accent-cq-cinnabar">
               <span>需轉機</span>
             </label>
           </div>
@@ -2905,59 +2916,174 @@
           </div>
 
           <!-- 去程航段 1 -->
-          <div class="p-2 bg-white rounded-xl border border-cq-border space-y-1.5">
+          <div class="p-2.5 bg-white rounded-xl border border-cq-border space-y-2">
             <span class="text-[10px] font-bold text-cq-muted block">{{ modalFlight.form.outboundHasTransfer ? '第 1 航段 (起飛至轉機地)' : '直飛航段' }}</span>
             <div>
               <label class="block text-[9px] text-cq-muted">班機號碼</label>
-              <input type="text" v-model="modalFlight.form.outboundLeg1FlightNo" placeholder="HX283" class="w-full px-2 py-1 rounded border bg-cq-wash font-mono text-[11px]">
+              <input type="text" v-model="modalFlight.form.outboundLeg1FlightNo" placeholder="HX283" class="w-full px-2 py-1 rounded border bg-cq-wash font-mono text-[11px] uppercase">
             </div>
 
-            <div class="grid grid-cols-3 gap-1.5 pt-1">
-              <div>
-                <label class="block text-[9px] text-cq-muted">起飛時間 (24小時制)</label>
-                <input type="time" v-model="modalFlight.form.outboundLeg1DepTime" class="w-full px-1.5 py-1 rounded border bg-cq-wash font-mono text-[11px]">
+            <!-- 起飛機場與時間 -->
+            <div class="p-2 rounded-lg bg-cq-wash/60 border border-cq-border/70 space-y-1.5">
+              <div class="grid grid-cols-2 gap-1.5">
+                <div>
+                  <label class="block text-[9px] text-cq-muted">起飛時間 (24小時制)</label>
+                  <input type="time" v-model="modalFlight.form.outboundLeg1DepTime" class="w-full px-1.5 py-1 rounded border bg-white font-mono text-[11px]">
+                </div>
+                <div>
+                  <label class="block text-[9px] text-cq-muted">出發機場代號</label>
+                  <div v-if="!modalFlight.form.outboundLeg1DepIsCustomCode">
+                    <select 
+                      v-model="modalFlight.form.outboundLeg1DepCode" 
+                      @change="onAirportCodeSelect('outboundLeg1Dep')"
+                      class="w-full px-1.5 py-1 rounded border bg-white font-mono text-[11px] font-bold text-cq-charcoal"
+                    >
+                      <option value="">選擇機場</option>
+                      <option v-for="ap in airportOptions" :key="ap.code" :value="ap.code">{{ ap.code }} · {{ ap.name }}</option>
+                      <option value="CUSTOM">✎ 自訂代號...</option>
+                    </select>
+                  </div>
+                  <div v-else class="flex items-center space-x-1">
+                    <input 
+                      type="text" 
+                      v-model="modalFlight.form.outboundLeg1DepCode" 
+                      @input="modalFlight.form.outboundLeg1DepCode = modalFlight.form.outboundLeg1DepCode.toUpperCase()"
+                      maxlength="4"
+                      placeholder="輸入代號" 
+                      class="w-full px-1.5 py-1 rounded border border-cq-cinnabar bg-white font-mono text-[11px] font-bold uppercase text-cq-charcoal"
+                    >
+                    <button type="button" @click="resetCustomAirportCode('outboundLeg1Dep')" class="px-1.5 py-1 rounded border border-cq-border bg-white text-[10px] text-cq-muted hover:text-cq-charcoal flex-shrink-0" title="返回下拉選單">
+                      <i class="fa-solid fa-list"></i>
+                    </button>
+                  </div>
+                </div>
               </div>
-              <div>
-                <label class="block text-[9px] text-cq-muted">出發機場代碼</label>
-                <input type="text" v-model="modalFlight.form.outboundLeg1DepCode" placeholder="TPE" class="w-full px-1.5 py-1 rounded border bg-cq-wash font-mono text-[11px] uppercase">
-              </div>
-              <div>
-                <label class="block text-[9px] text-cq-muted">機場與航廈</label>
-                <input type="text" v-model="modalFlight.form.outboundLeg1DepAirport" placeholder="台北桃園 T2" class="w-full px-1.5 py-1 rounded border bg-cq-wash text-[11px]">
+              <div class="grid grid-cols-5 gap-1.5">
+                <div class="col-span-3">
+                  <label class="block text-[9px] text-cq-muted">機場簡稱 (自動帶入/可改)</label>
+                  <input type="text" v-model="modalFlight.form.outboundLeg1DepName" @input="syncAirportDisplay('outboundLeg1Dep')" placeholder="台北桃園" class="w-full px-1.5 py-1 rounded border bg-white text-[11px]">
+                </div>
+                <div class="col-span-2">
+                  <label class="block text-[9px] text-cq-muted">航廈選擇</label>
+                  <select 
+                    v-if="!modalFlight.form.outboundLeg1DepIsCustomTerminal"
+                    v-model="modalFlight.form.outboundLeg1DepTerminal" 
+                    @change="onTerminalSelect('outboundLeg1Dep')"
+                    class="w-full px-1 py-1 rounded border bg-white font-mono text-[11px] text-cq-charcoal"
+                  >
+                    <option value="">無/不分航廈</option>
+                    <option v-for="t in terminalOptions" :key="t.value" :value="t.value">{{ t.label }}</option>
+                    <option value="CUSTOM">✎ 自訂...</option>
+                  </select>
+                  <div v-else class="flex items-center space-x-1">
+                    <input 
+                      type="text" 
+                      v-model="modalFlight.form.outboundLeg1DepTerminal" 
+                      @input="syncAirportDisplay('outboundLeg1Dep')"
+                      placeholder="自訂航廈" 
+                      class="w-full px-1 py-1 rounded border border-cq-cinnabar bg-white font-mono text-[11px]"
+                    >
+                    <button type="button" @click="resetCustomTerminal('outboundLeg1Dep')" class="px-1 py-1 rounded border border-cq-border bg-white text-[9px] text-cq-muted flex-shrink-0" title="返回選單">
+                      <i class="fa-solid fa-list"></i>
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
 
-            <div class="grid grid-cols-3 gap-1.5 pt-1">
-              <div>
-                <label class="block text-[9px] text-cq-muted">抵達時間 (24小時制)</label>
-                <input type="time" v-model="modalFlight.form.outboundLeg1ArrTime" class="w-full px-1.5 py-1 rounded border bg-cq-wash font-mono text-[11px]">
+            <!-- 抵達機場與時間 -->
+            <div class="p-2 rounded-lg bg-cq-wash/60 border border-cq-border/70 space-y-1.5">
+              <div class="grid grid-cols-2 gap-1.5">
+                <div>
+                  <label class="block text-[9px] text-cq-muted">抵達時間 (24小時制)</label>
+                  <input type="time" v-model="modalFlight.form.outboundLeg1ArrTime" @input="recalcLayoverDurations" class="w-full px-1.5 py-1 rounded border bg-white font-mono text-[11px]">
+                </div>
+                <div>
+                  <label class="block text-[9px] text-cq-muted">抵達機場代號</label>
+                  <div v-if="!modalFlight.form.outboundLeg1ArrIsCustomCode">
+                    <select 
+                      v-model="modalFlight.form.outboundLeg1ArrCode" 
+                      @change="onAirportCodeSelect('outboundLeg1Arr')"
+                      class="w-full px-1.5 py-1 rounded border bg-white font-mono text-[11px] font-bold text-cq-charcoal"
+                    >
+                      <option value="">選擇機場</option>
+                      <option v-for="ap in airportOptions" :key="ap.code" :value="ap.code">{{ ap.code }} · {{ ap.name }}</option>
+                      <option value="CUSTOM">✎ 自訂代號...</option>
+                    </select>
+                  </div>
+                  <div v-else class="flex items-center space-x-1">
+                    <input 
+                      type="text" 
+                      v-model="modalFlight.form.outboundLeg1ArrCode" 
+                      @input="modalFlight.form.outboundLeg1ArrCode = modalFlight.form.outboundLeg1ArrCode.toUpperCase()"
+                      maxlength="4"
+                      placeholder="輸入代號" 
+                      class="w-full px-1.5 py-1 rounded border border-cq-cinnabar bg-white font-mono text-[11px] font-bold uppercase text-cq-charcoal"
+                    >
+                    <button type="button" @click="resetCustomAirportCode('outboundLeg1Arr')" class="px-1.5 py-1 rounded border border-cq-border bg-white text-[10px] text-cq-muted hover:text-cq-charcoal flex-shrink-0" title="返回下拉選單">
+                      <i class="fa-solid fa-list"></i>
+                    </button>
+                  </div>
+                </div>
               </div>
-              <div>
-                <label class="block text-[9px] text-cq-muted">抵達機場代碼</label>
-                <input type="text" v-model="modalFlight.form.outboundLeg1ArrCode" placeholder="HKG" class="w-full px-1.5 py-1 rounded border bg-cq-wash font-mono text-[11px] uppercase">
-              </div>
-              <div>
-                <label class="block text-[9px] text-cq-muted">機場與航廈</label>
-                <input type="text" v-model="modalFlight.form.outboundLeg1ArrAirport" placeholder="香港機場 T1" class="w-full px-1.5 py-1 rounded border bg-cq-wash text-[11px]">
+              <div class="grid grid-cols-5 gap-1.5">
+                <div class="col-span-3">
+                  <label class="block text-[9px] text-cq-muted">機場簡稱 (自動帶入/可改)</label>
+                  <input type="text" v-model="modalFlight.form.outboundLeg1ArrName" @input="syncAirportDisplay('outboundLeg1Arr')" placeholder="香港機場" class="w-full px-1.5 py-1 rounded border bg-white text-[11px]">
+                </div>
+                <div class="col-span-2">
+                  <label class="block text-[9px] text-cq-muted">航廈選擇</label>
+                  <select 
+                    v-if="!modalFlight.form.outboundLeg1ArrIsCustomTerminal"
+                    v-model="modalFlight.form.outboundLeg1ArrTerminal" 
+                    @change="onTerminalSelect('outboundLeg1Arr')"
+                    class="w-full px-1 py-1 rounded border bg-white font-mono text-[11px] text-cq-charcoal"
+                  >
+                    <option value="">無/不分航廈</option>
+                    <option v-for="t in terminalOptions" :key="t.value" :value="t.value">{{ t.label }}</option>
+                    <option value="CUSTOM">✎ 自訂...</option>
+                  </select>
+                  <div v-else class="flex items-center space-x-1">
+                    <input 
+                      type="text" 
+                      v-model="modalFlight.form.outboundLeg1ArrTerminal" 
+                      @input="syncAirportDisplay('outboundLeg1Arr')"
+                      placeholder="自訂航廈" 
+                      class="w-full px-1 py-1 rounded border border-cq-cinnabar bg-white font-mono text-[11px]"
+                    >
+                    <button type="button" @click="resetCustomTerminal('outboundLeg1Arr')" class="px-1 py-1 rounded border border-cq-border bg-white text-[9px] text-cq-muted flex-shrink-0" title="返回選單">
+                      <i class="fa-solid fa-list"></i>
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
 
           <!-- 去程轉機詳細 (僅需轉機時填寫) -->
           <template v-if="modalFlight.form.outboundHasTransfer">
-            <div class="p-2 bg-cq-goldLight/60 rounded-xl border border-cq-gold/30 space-y-1.5">
-              <span class="text-[10px] font-bold text-cq-gold block flex items-center space-x-1">
-                <i class="fa-solid fa-clock-rotate-left text-[9px]"></i>
-                <span>轉機中繼設定</span>
-              </span>
+            <div class="p-2.5 bg-cq-goldLight/60 rounded-xl border border-cq-gold/30 space-y-1.5">
+              <div class="flex items-center justify-between">
+                <span class="text-[10px] font-bold text-cq-gold flex items-center space-x-1">
+                  <i class="fa-solid fa-clock-rotate-left text-[9px]"></i>
+                  <span>轉機中繼設定 (自動計算停留)</span>
+                </span>
+                <button 
+                  type="button" 
+                  @click="recalcLayoverDurations" 
+                  class="text-[9px] px-1.5 py-0.5 rounded bg-white text-cq-gold border border-cq-gold/30 hover:bg-cq-gold hover:text-white transition font-mono"
+                >
+                  重新計算
+                </button>
+              </div>
               <div class="grid grid-cols-2 gap-2">
                 <div>
-                  <label class="block text-[9px] text-cq-muted">轉機停留等待時長</label>
-                  <input type="text" v-model="modalFlight.form.outboundLayoverDuration" placeholder="2 小時 10 分" class="w-full px-2 py-1 rounded border border-cq-border bg-white text-xs">
+                  <label class="block text-[9px] text-cq-muted">轉機停留時長 (自動計算)</label>
+                  <input type="text" v-model="modalFlight.form.outboundLayoverDuration" placeholder="自動計算或手動填" class="w-full px-2 py-1 rounded border border-cq-border bg-white text-xs font-bold text-cq-charcoal">
                 </div>
                 <div>
                   <label class="block text-[9px] text-cq-muted">是否過夜轉機</label>
-                  <select v-model="modalFlight.form.outboundIsOvernight" class="w-full px-2 py-1 rounded border border-cq-border bg-white text-xs font-medium">
+                  <select v-model="modalFlight.form.outboundIsOvernight" @change="recalcLayoverDurations" class="w-full px-2 py-1 rounded border border-cq-border bg-white text-xs font-medium">
                     <option :value="false">當日轉機 (不過夜)</option>
                     <option :value="true">過夜轉機 (跨日)</option>
                   </select>
@@ -2986,40 +3112,146 @@
             </div>
 
             <!-- 去程航段 2 -->
-            <div class="p-2 bg-white rounded-xl border border-cq-border space-y-1.5">
+            <div class="p-2.5 bg-white rounded-xl border border-cq-border space-y-2">
               <span class="text-[10px] font-bold text-cq-muted block">第 2 航段 (轉機至目的地)</span>
               <div>
                 <label class="block text-[9px] text-cq-muted">班機號碼</label>
-                <input type="text" v-model="modalFlight.form.outboundLeg2FlightNo" placeholder="HX496" class="w-full px-2 py-1 rounded border bg-cq-wash font-mono text-[11px]">
+                <input type="text" v-model="modalFlight.form.outboundLeg2FlightNo" placeholder="HX496" class="w-full px-2 py-1 rounded border bg-cq-wash font-mono text-[11px] uppercase">
               </div>
 
-              <div class="grid grid-cols-3 gap-1.5 pt-1">
-                <div>
-                  <label class="block text-[9px] text-cq-muted">出發時間 (24小時制)</label>
-                  <input type="time" v-model="modalFlight.form.outboundLeg2DepTime" class="w-full px-1.5 py-1 rounded border bg-cq-wash font-mono text-[11px]">
+              <!-- 轉機出發機場與時間 -->
+              <div class="p-2 rounded-lg bg-cq-wash/60 border border-cq-border/70 space-y-1.5">
+                <div class="grid grid-cols-2 gap-1.5">
+                  <div>
+                    <label class="block text-[9px] text-cq-muted">出發時間 (24小時制)</label>
+                    <input type="time" v-model="modalFlight.form.outboundLeg2DepTime" @input="recalcLayoverDurations" class="w-full px-1.5 py-1 rounded border bg-white font-mono text-[11px]">
+                  </div>
+                  <div>
+                    <label class="block text-[9px] text-cq-muted">中轉機場代號</label>
+                    <div v-if="!modalFlight.form.outboundLeg2DepIsCustomCode">
+                      <select 
+                        v-model="modalFlight.form.outboundLeg2DepCode" 
+                        @change="onAirportCodeSelect('outboundLeg2Dep')"
+                        class="w-full px-1.5 py-1 rounded border bg-white font-mono text-[11px] font-bold text-cq-charcoal"
+                      >
+                        <option value="">選擇機場</option>
+                        <option v-for="ap in airportOptions" :key="ap.code" :value="ap.code">{{ ap.code }} · {{ ap.name }}</option>
+                        <option value="CUSTOM">✎ 自訂代號...</option>
+                      </select>
+                    </div>
+                    <div v-else class="flex items-center space-x-1">
+                      <input 
+                        type="text" 
+                        v-model="modalFlight.form.outboundLeg2DepCode" 
+                        @input="modalFlight.form.outboundLeg2DepCode = modalFlight.form.outboundLeg2DepCode.toUpperCase()"
+                        maxlength="4"
+                        placeholder="輸入代號" 
+                        class="w-full px-1.5 py-1 rounded border border-cq-cinnabar bg-white font-mono text-[11px] font-bold uppercase text-cq-charcoal"
+                      >
+                      <button type="button" @click="resetCustomAirportCode('outboundLeg2Dep')" class="px-1.5 py-1 rounded border border-cq-border bg-white text-[10px] text-cq-muted hover:text-cq-charcoal flex-shrink-0" title="返回下拉選單">
+                        <i class="fa-solid fa-list"></i>
+                      </button>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <label class="block text-[9px] text-cq-muted">中轉機場代碼</label>
-                  <input type="text" v-model="modalFlight.form.outboundLeg2DepCode" placeholder="HKG" class="w-full px-1.5 py-1 rounded border bg-cq-wash font-mono text-[11px] uppercase">
-                </div>
-                <div>
-                  <label class="block text-[9px] text-cq-muted">機場與航廈</label>
-                  <input type="text" v-model="modalFlight.form.outboundLeg2DepAirport" placeholder="香港機場 T2" class="w-full px-1.5 py-1 rounded border bg-cq-wash text-[11px]">
+                <div class="grid grid-cols-5 gap-1.5">
+                  <div class="col-span-3">
+                    <label class="block text-[9px] text-cq-muted">機場簡稱 (自動帶入/可改)</label>
+                    <input type="text" v-model="modalFlight.form.outboundLeg2DepName" @input="syncAirportDisplay('outboundLeg2Dep')" placeholder="香港機場" class="w-full px-1.5 py-1 rounded border bg-white text-[11px]">
+                  </div>
+                  <div class="col-span-2">
+                    <label class="block text-[9px] text-cq-muted">航廈選擇</label>
+                    <select 
+                      v-if="!modalFlight.form.outboundLeg2DepIsCustomTerminal"
+                      v-model="modalFlight.form.outboundLeg2DepTerminal" 
+                      @change="onTerminalSelect('outboundLeg2Dep')"
+                      class="w-full px-1 py-1 rounded border bg-white font-mono text-[11px] text-cq-charcoal"
+                    >
+                      <option value="">無/不分航廈</option>
+                      <option v-for="t in terminalOptions" :key="t.value" :value="t.value">{{ t.label }}</option>
+                      <option value="CUSTOM">✎ 自訂...</option>
+                    </select>
+                    <div v-else class="flex items-center space-x-1">
+                      <input 
+                        type="text" 
+                        v-model="modalFlight.form.outboundLeg2DepTerminal" 
+                        @input="syncAirportDisplay('outboundLeg2Dep')"
+                        placeholder="自訂航廈" 
+                        class="w-full px-1 py-1 rounded border border-cq-cinnabar bg-white font-mono text-[11px]"
+                      >
+                      <button type="button" @click="resetCustomTerminal('outboundLeg2Dep')" class="px-1 py-1 rounded border border-cq-border bg-white text-[9px] text-cq-muted flex-shrink-0" title="返回選單">
+                        <i class="fa-solid fa-list"></i>
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              <div class="grid grid-cols-3 gap-1.5 pt-1">
-                <div>
-                  <label class="block text-[9px] text-cq-muted">抵達時間 (24小時制)</label>
-                  <input type="time" v-model="modalFlight.form.outboundLeg2ArrTime" class="w-full px-1.5 py-1 rounded border bg-cq-wash font-mono text-[11px]">
+              <!-- 目的機場與時間 -->
+              <div class="p-2 rounded-lg bg-cq-wash/60 border border-cq-border/70 space-y-1.5">
+                <div class="grid grid-cols-2 gap-1.5">
+                  <div>
+                    <label class="block text-[9px] text-cq-muted">抵達時間 (24小時制)</label>
+                    <input type="time" v-model="modalFlight.form.outboundLeg2ArrTime" class="w-full px-1.5 py-1 rounded border bg-white font-mono text-[11px]">
+                  </div>
+                  <div>
+                    <label class="block text-[9px] text-cq-muted">目的機場代號</label>
+                    <div v-if="!modalFlight.form.outboundLeg2ArrIsCustomCode">
+                      <select 
+                        v-model="modalFlight.form.outboundLeg2ArrCode" 
+                        @change="onAirportCodeSelect('outboundLeg2Arr')"
+                        class="w-full px-1.5 py-1 rounded border bg-white font-mono text-[11px] font-bold text-cq-charcoal"
+                      >
+                        <option value="">選擇機場</option>
+                        <option v-for="ap in airportOptions" :key="ap.code" :value="ap.code">{{ ap.code }} · {{ ap.name }}</option>
+                        <option value="CUSTOM">✎ 自訂代號...</option>
+                      </select>
+                    </div>
+                    <div v-else class="flex items-center space-x-1">
+                      <input 
+                        type="text" 
+                        v-model="modalFlight.form.outboundLeg2ArrCode" 
+                        @input="modalFlight.form.outboundLeg2ArrCode = modalFlight.form.outboundLeg2ArrCode.toUpperCase()"
+                        maxlength="4"
+                        placeholder="輸入代號" 
+                        class="w-full px-1.5 py-1 rounded border border-cq-cinnabar bg-white font-mono text-[11px] font-bold uppercase text-cq-charcoal"
+                      >
+                      <button type="button" @click="resetCustomAirportCode('outboundLeg2Arr')" class="px-1.5 py-1 rounded border border-cq-border bg-white text-[10px] text-cq-muted hover:text-cq-charcoal flex-shrink-0" title="返回下拉選單">
+                        <i class="fa-solid fa-list"></i>
+                      </button>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <label class="block text-[9px] text-cq-muted">目的機場代碼</label>
-                  <input type="text" v-model="modalFlight.form.outboundLeg2ArrCode" placeholder="CKG" class="w-full px-1.5 py-1 rounded border bg-cq-wash font-mono text-[11px] uppercase">
-                </div>
-                <div>
-                  <label class="block text-[9px] text-cq-muted">目的機場與航廈</label>
-                  <input type="text" v-model="modalFlight.form.outboundLeg2ArrAirport" placeholder="重慶江北 T3" class="w-full px-1.5 py-1 rounded border bg-cq-wash text-[11px]">
+                <div class="grid grid-cols-5 gap-1.5">
+                  <div class="col-span-3">
+                    <label class="block text-[9px] text-cq-muted">機場簡稱 (自動帶入/可改)</label>
+                    <input type="text" v-model="modalFlight.form.outboundLeg2ArrName" @input="syncAirportDisplay('outboundLeg2Arr')" placeholder="重慶江北" class="w-full px-1.5 py-1 rounded border bg-white text-[11px]">
+                  </div>
+                  <div class="col-span-2">
+                    <label class="block text-[9px] text-cq-muted">航廈選擇</label>
+                    <select 
+                      v-if="!modalFlight.form.outboundLeg2ArrIsCustomTerminal"
+                      v-model="modalFlight.form.outboundLeg2ArrTerminal" 
+                      @change="onTerminalSelect('outboundLeg2Arr')"
+                      class="w-full px-1 py-1 rounded border bg-white font-mono text-[11px] text-cq-charcoal"
+                    >
+                      <option value="">無/不分航廈</option>
+                      <option v-for="t in terminalOptions" :key="t.value" :value="t.value">{{ t.label }}</option>
+                      <option value="CUSTOM">✎ 自訂...</option>
+                    </select>
+                    <div v-else class="flex items-center space-x-1">
+                      <input 
+                        type="text" 
+                        v-model="modalFlight.form.outboundLeg2ArrTerminal" 
+                        @input="syncAirportDisplay('outboundLeg2Arr')"
+                        placeholder="自訂航廈" 
+                        class="w-full px-1 py-1 rounded border border-cq-cinnabar bg-white font-mono text-[11px]"
+                      >
+                      <button type="button" @click="resetCustomTerminal('outboundLeg2Arr')" class="px-1 py-1 rounded border border-cq-border bg-white text-[9px] text-cq-muted flex-shrink-0" title="返回選單">
+                        <i class="fa-solid fa-list"></i>
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -3034,7 +3266,7 @@
               <span>回程航班設定</span>
             </span>
             <label class="flex items-center space-x-1 text-[11px] cursor-pointer text-cq-charcoal select-none font-medium">
-              <input type="checkbox" v-model="modalFlight.form.inboundHasTransfer" class="rounded accent-cq-moss">
+              <input type="checkbox" v-model="modalFlight.form.inboundHasTransfer" @change="recalcLayoverDurations" class="rounded accent-cq-moss">
               <span>需轉機</span>
             </label>
           </div>
@@ -3056,59 +3288,174 @@
           </div>
 
           <!-- 回程航段 1 -->
-          <div class="p-2 bg-white rounded-xl border border-cq-border space-y-1.5">
+          <div class="p-2.5 bg-white rounded-xl border border-cq-border space-y-2">
             <span class="text-[10px] font-bold text-cq-muted block">{{ modalFlight.form.inboundHasTransfer ? '第 1 航段 (起飛至轉機地)' : '直飛航段' }}</span>
             <div>
               <label class="block text-[9px] text-cq-muted">班機號碼</label>
-              <input type="text" v-model="modalFlight.form.inboundLeg1FlightNo" placeholder="HX497" class="w-full px-2 py-1 rounded border bg-cq-wash font-mono text-[11px]">
+              <input type="text" v-model="modalFlight.form.inboundLeg1FlightNo" placeholder="HX497" class="w-full px-2 py-1 rounded border bg-cq-wash font-mono text-[11px] uppercase">
             </div>
 
-            <div class="grid grid-cols-3 gap-1.5 pt-1">
-              <div>
-                <label class="block text-[9px] text-cq-muted">起飛時間 (24小時制)</label>
-                <input type="time" v-model="modalFlight.form.inboundLeg1DepTime" class="w-full px-1.5 py-1 rounded border bg-cq-wash font-mono text-[11px]">
+            <!-- 起飛機場與時間 -->
+            <div class="p-2 rounded-lg bg-cq-wash/60 border border-cq-border/70 space-y-1.5">
+              <div class="grid grid-cols-2 gap-1.5">
+                <div>
+                  <label class="block text-[9px] text-cq-muted">起飛時間 (24小時制)</label>
+                  <input type="time" v-model="modalFlight.form.inboundLeg1DepTime" class="w-full px-1.5 py-1 rounded border bg-white font-mono text-[11px]">
+                </div>
+                <div>
+                  <label class="block text-[9px] text-cq-muted">出發機場代號</label>
+                  <div v-if="!modalFlight.form.inboundLeg1DepIsCustomCode">
+                    <select 
+                      v-model="modalFlight.form.inboundLeg1DepCode" 
+                      @change="onAirportCodeSelect('inboundLeg1Dep')"
+                      class="w-full px-1.5 py-1 rounded border bg-white font-mono text-[11px] font-bold text-cq-charcoal"
+                    >
+                      <option value="">選擇機場</option>
+                      <option v-for="ap in airportOptions" :key="ap.code" :value="ap.code">{{ ap.code }} · {{ ap.name }}</option>
+                      <option value="CUSTOM">✎ 自訂代號...</option>
+                    </select>
+                  </div>
+                  <div v-else class="flex items-center space-x-1">
+                    <input 
+                      type="text" 
+                      v-model="modalFlight.form.inboundLeg1DepCode" 
+                      @input="modalFlight.form.inboundLeg1DepCode = modalFlight.form.inboundLeg1DepCode.toUpperCase()"
+                      maxlength="4"
+                      placeholder="輸入代號" 
+                      class="w-full px-1.5 py-1 rounded border border-cq-cinnabar bg-white font-mono text-[11px] font-bold uppercase text-cq-charcoal"
+                    >
+                    <button type="button" @click="resetCustomAirportCode('inboundLeg1Dep')" class="px-1.5 py-1 rounded border border-cq-border bg-white text-[10px] text-cq-muted hover:text-cq-charcoal flex-shrink-0" title="返回下拉選單">
+                      <i class="fa-solid fa-list"></i>
+                    </button>
+                  </div>
+                </div>
               </div>
-              <div>
-                <label class="block text-[9px] text-cq-muted">出發機場代碼</label>
-                <input type="text" v-model="modalFlight.form.inboundLeg1DepCode" placeholder="CKG" class="w-full px-1.5 py-1 rounded border bg-cq-wash font-mono text-[11px] uppercase">
-              </div>
-              <div>
-                <label class="block text-[9px] text-cq-muted">機場與航廈</label>
-                <input type="text" v-model="modalFlight.form.inboundLeg1DepAirport" placeholder="重慶江北 T3" class="w-full px-1.5 py-1 rounded border bg-cq-wash text-[11px]">
+              <div class="grid grid-cols-5 gap-1.5">
+                <div class="col-span-3">
+                  <label class="block text-[9px] text-cq-muted">機場簡稱 (自動帶入/可改)</label>
+                  <input type="text" v-model="modalFlight.form.inboundLeg1DepName" @input="syncAirportDisplay('inboundLeg1Dep')" placeholder="重慶江北" class="w-full px-1.5 py-1 rounded border bg-white text-[11px]">
+                </div>
+                <div class="col-span-2">
+                  <label class="block text-[9px] text-cq-muted">航廈選擇</label>
+                  <select 
+                    v-if="!modalFlight.form.inboundLeg1DepIsCustomTerminal"
+                    v-model="modalFlight.form.inboundLeg1DepTerminal" 
+                    @change="onTerminalSelect('inboundLeg1Dep')"
+                    class="w-full px-1 py-1 rounded border bg-white font-mono text-[11px] text-cq-charcoal"
+                  >
+                    <option value="">無/不分航廈</option>
+                    <option v-for="t in terminalOptions" :key="t.value" :value="t.value">{{ t.label }}</option>
+                    <option value="CUSTOM">✎ 自訂...</option>
+                  </select>
+                  <div v-else class="flex items-center space-x-1">
+                    <input 
+                      type="text" 
+                      v-model="modalFlight.form.inboundLeg1DepTerminal" 
+                      @input="syncAirportDisplay('inboundLeg1Dep')"
+                      placeholder="自訂航廈" 
+                      class="w-full px-1 py-1 rounded border border-cq-cinnabar bg-white font-mono text-[11px]"
+                    >
+                    <button type="button" @click="resetCustomTerminal('inboundLeg1Dep')" class="px-1 py-1 rounded border border-cq-border bg-white text-[9px] text-cq-muted flex-shrink-0" title="返回選單">
+                      <i class="fa-solid fa-list"></i>
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
 
-            <div class="grid grid-cols-3 gap-1.5 pt-1">
-              <div>
-                <label class="block text-[9px] text-cq-muted">抵達時間 (24小時制)</label>
-                <input type="time" v-model="modalFlight.form.inboundLeg1ArrTime" class="w-full px-1.5 py-1 rounded border bg-cq-wash font-mono text-[11px]">
+            <!-- 抵達機場與時間 -->
+            <div class="p-2 rounded-lg bg-cq-wash/60 border border-cq-border/70 space-y-1.5">
+              <div class="grid grid-cols-2 gap-1.5">
+                <div>
+                  <label class="block text-[9px] text-cq-muted">抵達時間 (24小時制)</label>
+                  <input type="time" v-model="modalFlight.form.inboundLeg1ArrTime" @input="recalcLayoverDurations" class="w-full px-1.5 py-1 rounded border bg-white font-mono text-[11px]">
+                </div>
+                <div>
+                  <label class="block text-[9px] text-cq-muted">抵達機場代號</label>
+                  <div v-if="!modalFlight.form.inboundLeg1ArrIsCustomCode">
+                    <select 
+                      v-model="modalFlight.form.inboundLeg1ArrCode" 
+                      @change="onAirportCodeSelect('inboundLeg1Arr')"
+                      class="w-full px-1.5 py-1 rounded border bg-white font-mono text-[11px] font-bold text-cq-charcoal"
+                    >
+                      <option value="">選擇機場</option>
+                      <option v-for="ap in airportOptions" :key="ap.code" :value="ap.code">{{ ap.code }} · {{ ap.name }}</option>
+                      <option value="CUSTOM">✎ 自訂代號...</option>
+                    </select>
+                  </div>
+                  <div v-else class="flex items-center space-x-1">
+                    <input 
+                      type="text" 
+                      v-model="modalFlight.form.inboundLeg1ArrCode" 
+                      @input="modalFlight.form.inboundLeg1ArrCode = modalFlight.form.inboundLeg1ArrCode.toUpperCase()"
+                      maxlength="4"
+                      placeholder="輸入代號" 
+                      class="w-full px-1.5 py-1 rounded border border-cq-cinnabar bg-white font-mono text-[11px] font-bold uppercase text-cq-charcoal"
+                    >
+                    <button type="button" @click="resetCustomAirportCode('inboundLeg1Arr')" class="px-1.5 py-1 rounded border border-cq-border bg-white text-[10px] text-cq-muted hover:text-cq-charcoal flex-shrink-0" title="返回下拉選單">
+                      <i class="fa-solid fa-list"></i>
+                    </button>
+                  </div>
+                </div>
               </div>
-              <div>
-                <label class="block text-[9px] text-cq-muted">抵達機場代碼</label>
-                <input type="text" v-model="modalFlight.form.inboundLeg1ArrCode" placeholder="HKG" class="w-full px-1.5 py-1 rounded border bg-cq-wash font-mono text-[11px] uppercase">
-              </div>
-              <div>
-                <label class="block text-[9px] text-cq-muted">機場與航廈</label>
-                <input type="text" v-model="modalFlight.form.inboundLeg1ArrAirport" placeholder="香港機場 T1" class="w-full px-1.5 py-1 rounded border bg-cq-wash text-[11px]">
+              <div class="grid grid-cols-5 gap-1.5">
+                <div class="col-span-3">
+                  <label class="block text-[9px] text-cq-muted">機場簡稱 (自動帶入/可改)</label>
+                  <input type="text" v-model="modalFlight.form.inboundLeg1ArrName" @input="syncAirportDisplay('inboundLeg1Arr')" placeholder="香港機場" class="w-full px-1.5 py-1 rounded border bg-white text-[11px]">
+                </div>
+                <div class="col-span-2">
+                  <label class="block text-[9px] text-cq-muted">航廈選擇</label>
+                  <select 
+                    v-if="!modalFlight.form.inboundLeg1ArrIsCustomTerminal"
+                    v-model="modalFlight.form.inboundLeg1ArrTerminal" 
+                    @change="onTerminalSelect('inboundLeg1Arr')"
+                    class="w-full px-1 py-1 rounded border bg-white font-mono text-[11px] text-cq-charcoal"
+                  >
+                    <option value="">無/不分航廈</option>
+                    <option v-for="t in terminalOptions" :key="t.value" :value="t.value">{{ t.label }}</option>
+                    <option value="CUSTOM">✎ 自訂...</option>
+                  </select>
+                  <div v-else class="flex items-center space-x-1">
+                    <input 
+                      type="text" 
+                      v-model="modalFlight.form.inboundLeg1ArrTerminal" 
+                      @input="syncAirportDisplay('inboundLeg1Arr')"
+                      placeholder="自訂航廈" 
+                      class="w-full px-1 py-1 rounded border border-cq-cinnabar bg-white font-mono text-[11px]"
+                    >
+                    <button type="button" @click="resetCustomTerminal('inboundLeg1Arr')" class="px-1 py-1 rounded border border-cq-border bg-white text-[9px] text-cq-muted flex-shrink-0" title="返回選單">
+                      <i class="fa-solid fa-list"></i>
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
 
           <!-- 回程轉機詳細 (僅需轉機時填寫) -->
           <template v-if="modalFlight.form.inboundHasTransfer">
-            <div class="p-2 bg-cq-mossLight/60 rounded-xl border border-cq-moss/30 space-y-1.5">
-              <span class="text-[10px] font-bold text-cq-moss block flex items-center space-x-1">
-                <i class="fa-solid fa-clock-rotate-left text-[9px]"></i>
-                <span>轉機中繼設定</span>
-              </span>
+            <div class="p-2.5 bg-cq-mossLight/60 rounded-xl border border-cq-moss/30 space-y-1.5">
+              <div class="flex items-center justify-between">
+                <span class="text-[10px] font-bold text-cq-moss flex items-center space-x-1">
+                  <i class="fa-solid fa-clock-rotate-left text-[9px]"></i>
+                  <span>轉機中繼設定 (自動計算停留)</span>
+                </span>
+                <button 
+                  type="button" 
+                  @click="recalcLayoverDurations" 
+                  class="text-[9px] px-1.5 py-0.5 rounded bg-white text-cq-moss border border-cq-moss/30 hover:bg-cq-moss hover:text-white transition font-mono"
+                >
+                  重新計算
+                </button>
+              </div>
               <div class="grid grid-cols-2 gap-2">
                 <div>
-                  <label class="block text-[9px] text-cq-muted">轉機停留等待時長</label>
-                  <input type="text" v-model="modalFlight.form.inboundLayoverDuration" placeholder="2 小時 15 分" class="w-full px-2 py-1 rounded border border-cq-border bg-white text-xs">
+                  <label class="block text-[9px] text-cq-muted">轉機停留時長 (自動計算)</label>
+                  <input type="text" v-model="modalFlight.form.inboundLayoverDuration" placeholder="自動計算或手動填" class="w-full px-2 py-1 rounded border border-cq-border bg-white text-xs font-bold text-cq-charcoal">
                 </div>
                 <div>
                   <label class="block text-[9px] text-cq-muted">是否過夜轉機</label>
-                  <select v-model="modalFlight.form.inboundIsOvernight" class="w-full px-2 py-1 rounded border border-cq-border bg-white text-xs font-medium">
+                  <select v-model="modalFlight.form.inboundIsOvernight" @change="recalcLayoverDurations" class="w-full px-2 py-1 rounded border border-cq-border bg-white text-xs font-medium">
                     <option :value="false">當日轉機 (不過夜)</option>
                     <option :value="true">過夜轉機 (跨日)</option>
                   </select>
@@ -3137,111 +3484,150 @@
             </div>
 
             <!-- 回程航段 2 -->
-            <div class="p-2 bg-white rounded-xl border border-cq-border space-y-1.5">
+            <div class="p-2.5 bg-white rounded-xl border border-cq-border space-y-2">
               <span class="text-[10px] font-bold text-cq-muted block">第 2 航段 (轉機至目的地)</span>
               <div>
                 <label class="block text-[9px] text-cq-muted">班機號碼</label>
-                <input type="text" v-model="modalFlight.form.inboundLeg2FlightNo" placeholder="HX284" class="w-full px-2 py-1 rounded border bg-cq-wash font-mono text-[11px]">
+                <input type="text" v-model="modalFlight.form.inboundLeg2FlightNo" placeholder="HX284" class="w-full px-2 py-1 rounded border bg-cq-wash font-mono text-[11px] uppercase">
               </div>
 
-              <div class="grid grid-cols-3 gap-1.5 pt-1">
-                <div>
-                  <label class="block text-[9px] text-cq-muted">出發時間 (24小時制)</label>
-                  <input type="time" v-model="modalFlight.form.inboundLeg2DepTime" class="w-full px-1.5 py-1 rounded border bg-cq-wash font-mono text-[11px]">
+              <!-- 轉機出發機場與時間 -->
+              <div class="p-2 rounded-lg bg-cq-wash/60 border border-cq-border/70 space-y-1.5">
+                <div class="grid grid-cols-2 gap-1.5">
+                  <div>
+                    <label class="block text-[9px] text-cq-muted">出發時間 (24小時制)</label>
+                    <input type="time" v-model="modalFlight.form.inboundLeg2DepTime" @input="recalcLayoverDurations" class="w-full px-1.5 py-1 rounded border bg-white font-mono text-[11px]">
+                  </div>
+                  <div>
+                    <label class="block text-[9px] text-cq-muted">中轉機場代號</label>
+                    <div v-if="!modalFlight.form.inboundLeg2DepIsCustomCode">
+                      <select 
+                        v-model="modalFlight.form.inboundLeg2DepCode" 
+                        @change="onAirportCodeSelect('inboundLeg2Dep')"
+                        class="w-full px-1.5 py-1 rounded border bg-white font-mono text-[11px] font-bold text-cq-charcoal"
+                      >
+                        <option value="">選擇機場</option>
+                        <option v-for="ap in airportOptions" :key="ap.code" :value="ap.code">{{ ap.code }} · {{ ap.name }}</option>
+                        <option value="CUSTOM">✎ 自訂代號...</option>
+                      </select>
+                    </div>
+                    <div v-else class="flex items-center space-x-1">
+                      <input 
+                        type="text" 
+                        v-model="modalFlight.form.inboundLeg2DepCode" 
+                        @input="modalFlight.form.inboundLeg2DepCode = modalFlight.form.inboundLeg2DepCode.toUpperCase()"
+                        maxlength="4"
+                        placeholder="輸入代號" 
+                        class="w-full px-1.5 py-1 rounded border border-cq-cinnabar bg-white font-mono text-[11px] font-bold uppercase text-cq-charcoal"
+                      >
+                      <button type="button" @click="resetCustomAirportCode('inboundLeg2Dep')" class="px-1.5 py-1 rounded border border-cq-border bg-white text-[10px] text-cq-muted hover:text-cq-charcoal flex-shrink-0" title="返回下拉選單">
+                        <i class="fa-solid fa-list"></i>
+                      </button>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <label class="block text-[9px] text-cq-muted">中轉機場代碼</label>
-                  <input type="text" v-model="modalFlight.form.inboundLeg2DepCode" placeholder="HKG" class="w-full px-1.5 py-1 rounded border bg-cq-wash font-mono text-[11px] uppercase">
-                </div>
-                <div>
-                  <label class="block text-[9px] text-cq-muted">機場與航廈</label>
-                  <input type="text" v-model="modalFlight.form.inboundLeg2DepAirport" placeholder="香港機場 T1" class="w-full px-1.5 py-1 rounded border bg-cq-wash text-[11px]">
+                <div class="grid grid-cols-5 gap-1.5">
+                  <div class="col-span-3">
+                    <label class="block text-[9px] text-cq-muted">機場簡稱 (自動帶入/可改)</label>
+                    <input type="text" v-model="modalFlight.form.inboundLeg2DepName" @input="syncAirportDisplay('inboundLeg2Dep')" placeholder="香港機場" class="w-full px-1.5 py-1 rounded border bg-white text-[11px]">
+                  </div>
+                  <div class="col-span-2">
+                    <label class="block text-[9px] text-cq-muted">航廈選擇</label>
+                    <select 
+                      v-if="!modalFlight.form.inboundLeg2DepIsCustomTerminal"
+                      v-model="modalFlight.form.inboundLeg2DepTerminal" 
+                      @change="onTerminalSelect('inboundLeg2Dep')"
+                      class="w-full px-1 py-1 rounded border bg-white font-mono text-[11px] text-cq-charcoal"
+                    >
+                      <option value="">無/不分航廈</option>
+                      <option v-for="t in terminalOptions" :key="t.value" :value="t.value">{{ t.label }}</option>
+                      <option value="CUSTOM">✎ 自訂...</option>
+                    </select>
+                    <div v-else class="flex items-center space-x-1">
+                      <input 
+                        type="text" 
+                        v-model="modalFlight.form.inboundLeg2DepTerminal" 
+                        @input="syncAirportDisplay('inboundLeg2Dep')"
+                        placeholder="自訂航廈" 
+                        class="w-full px-1 py-1 rounded border border-cq-cinnabar bg-white font-mono text-[11px]"
+                      >
+                      <button type="button" @click="resetCustomTerminal('inboundLeg2Dep')" class="px-1 py-1 rounded border border-cq-border bg-white text-[9px] text-cq-muted flex-shrink-0" title="返回選單">
+                        <i class="fa-solid fa-list"></i>
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              <div class="grid grid-cols-3 gap-1.5 pt-1">
-                <div>
-                  <label class="block text-[9px] text-cq-muted">抵達時間 (24小時制)</label>
-                  <input type="time" v-model="modalFlight.form.inboundLeg2ArrTime" class="w-full px-1.5 py-1 rounded border bg-cq-wash font-mono text-[11px]">
+              <!-- 抵達機場與時間 -->
+              <div class="p-2 rounded-lg bg-cq-wash/60 border border-cq-border/70 space-y-1.5">
+                <div class="grid grid-cols-2 gap-1.5">
+                  <div>
+                    <label class="block text-[9px] text-cq-muted">抵達時間 (24小時制)</label>
+                    <input type="time" v-model="modalFlight.form.inboundLeg2ArrTime" class="w-full px-1.5 py-1 rounded border bg-white font-mono text-[11px]">
+                  </div>
+                  <div>
+                    <label class="block text-[9px] text-cq-muted">抵達機場代號</label>
+                    <div v-if="!modalFlight.form.inboundLeg2ArrIsCustomCode">
+                      <select 
+                        v-model="modalFlight.form.inboundLeg2ArrCode" 
+                        @change="onAirportCodeSelect('inboundLeg2Arr')"
+                        class="w-full px-1.5 py-1 rounded border bg-white font-mono text-[11px] font-bold text-cq-charcoal"
+                      >
+                        <option value="">選擇機場</option>
+                        <option v-for="ap in airportOptions" :key="ap.code" :value="ap.code">{{ ap.code }} · {{ ap.name }}</option>
+                        <option value="CUSTOM">✎ 自訂代號...</option>
+                      </select>
+                    </div>
+                    <div v-else class="flex items-center space-x-1">
+                      <input 
+                        type="text" 
+                        v-model="modalFlight.form.inboundLeg2ArrCode" 
+                        @input="modalFlight.form.inboundLeg2ArrCode = modalFlight.form.inboundLeg2ArrCode.toUpperCase()"
+                        maxlength="4"
+                        placeholder="輸入代號" 
+                        class="w-full px-1.5 py-1 rounded border border-cq-cinnabar bg-white font-mono text-[11px] font-bold uppercase text-cq-charcoal"
+                      >
+                      <button type="button" @click="resetCustomAirportCode('inboundLeg2Arr')" class="px-1.5 py-1 rounded border border-cq-border bg-white text-[10px] text-cq-muted hover:text-cq-charcoal flex-shrink-0" title="返回下拉選單">
+                        <i class="fa-solid fa-list"></i>
+                      </button>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <label class="block text-[9px] text-cq-muted">抵達機場代碼</label>
-                  <input type="text" v-model="modalFlight.form.inboundLeg2ArrCode" placeholder="TPE" class="w-full px-1.5 py-1 rounded border bg-cq-wash font-mono text-[11px] uppercase">
-                </div>
-                <div>
-                  <label class="block text-[9px] text-cq-muted">抵達機場與航廈</label>
-                  <input type="text" v-model="modalFlight.form.inboundLeg2ArrAirport" placeholder="台北桃園 T2" class="w-full px-1.5 py-1 rounded border bg-cq-wash text-[11px]">
+                <div class="grid grid-cols-5 gap-1.5">
+                  <div class="col-span-3">
+                    <label class="block text-[9px] text-cq-muted">機場簡稱 (自動帶入/可改)</label>
+                    <input type="text" v-model="modalFlight.form.inboundLeg2ArrName" @input="syncAirportDisplay('inboundLeg2Arr')" placeholder="台北桃園" class="w-full px-1.5 py-1 rounded border bg-white text-[11px]">
+                  </div>
+                  <div class="col-span-2">
+                    <label class="block text-[9px] text-cq-muted">航廈選擇</label>
+                    <select 
+                      v-if="!modalFlight.form.inboundLeg2ArrIsCustomTerminal"
+                      v-model="modalFlight.form.inboundLeg2ArrTerminal" 
+                      @change="onTerminalSelect('inboundLeg2Arr')"
+                      class="w-full px-1 py-1 rounded border bg-white font-mono text-[11px] text-cq-charcoal"
+                    >
+                      <option value="">無/不分航廈</option>
+                      <option v-for="t in terminalOptions" :key="t.value" :value="t.value">{{ t.label }}</option>
+                      <option value="CUSTOM">✎ 自訂...</option>
+                    </select>
+                    <div v-else class="flex items-center space-x-1">
+                      <input 
+                        type="text" 
+                        v-model="modalFlight.form.inboundLeg2ArrTerminal" 
+                        @input="syncAirportDisplay('inboundLeg2Arr')"
+                        placeholder="自訂航廈" 
+                        class="w-full px-1 py-1 rounded border border-cq-cinnabar bg-white font-mono text-[11px]"
+                      >
+                      <button type="button" @click="resetCustomTerminal('inboundLeg2Arr')" class="px-1 py-1 rounded border border-cq-border bg-white text-[9px] text-cq-muted flex-shrink-0" title="返回選單">
+                        <i class="fa-solid fa-list"></i>
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
           </template>
-        </div>
-
-        <!-- 醒目提醒設定 -->
-        <div class="p-3 bg-amber-50/70 rounded-xl border border-amber-300/80 space-y-2">
-          <div class="flex items-center justify-between">
-            <span class="font-bold text-amber-900 flex items-center space-x-1.5">
-              <i class="fa-solid fa-bell text-amber-600 text-xs"></i>
-              <span>機票/轉機醒目提醒</span>
-            </span>
-            <select v-model="modalFlight.form.alertType" class="bg-white border border-amber-300 rounded px-1.5 py-0.5 text-[10px] text-amber-900 font-medium">
-              <option value="warning">警示橘 (注意)</option>
-              <option value="danger">強烈紅 (緊急)</option>
-              <option value="info">資訊藍 (提示)</option>
-            </select>
-          </div>
-          <input type="text" v-model="modalFlight.form.alertTitle" placeholder="提醒標題" class="w-full px-2.5 py-1.5 rounded-lg border border-amber-300 bg-white text-xs text-amber-900 font-medium">
-          <textarea v-model="modalFlight.form.alertText" rows="2" placeholder="提醒詳細內文..." class="w-full px-2.5 py-1.5 rounded-lg border border-amber-300 bg-white text-xs text-amber-900"></textarea>
-        </div>
-
-        <div class="flex space-x-2 pt-2">
-          <button type="button" @click="modalFlight.isOpen = false" class="flex-1 py-2.5 rounded-xl border border-cq-border text-cq-muted font-medium">取消</button>
-          <button type="button" @click="submitSaveFlight" class="flex-1 py-2.5 rounded-xl bg-cq-charcoal text-white font-medium">儲存機票</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- 彈窗 (D3): 編輯旅平險+不便險 Modal -->
-  <div v-if="modalInsurance.isOpen" class="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
-    <div class="bg-white rounded-t-3xl sm:rounded-3xl p-5 w-full max-w-sm border border-cq-border shadow-xl space-y-3 max-h-[90vh] overflow-y-auto">
-      <div class="flex justify-between items-center">
-        <h3 class="font-serif-cq font-bold text-sm text-cq-charcoal">編輯旅平險 + 不便險</h3>
-        <button type="button" @click="modalInsurance.isOpen = false" class="text-cq-muted hover:text-cq-charcoal text-xs">
-          <i class="fa-solid fa-xmark"></i>
-        </button>
-      </div>
-
-      <div class="space-y-2.5 text-xs">
-        <div class="grid grid-cols-2 gap-2">
-          <div>
-            <label class="block text-cq-muted mb-1 font-medium">保險公司名稱</label>
-            <input type="text" v-model="modalInsurance.form.companyName" placeholder="第一金人壽" class="w-full px-3 py-2 rounded-xl border border-cq-border bg-cq-wash text-cq-charcoal font-medium">
-          </div>
-          <div>
-            <label class="block text-cq-muted mb-1 font-medium">標記徽章</label>
-            <input type="text" v-model="modalInsurance.form.badgeText" placeholder="線上投保" class="w-full px-3 py-2 rounded-xl border border-cq-border bg-cq-wash text-cq-charcoal font-mono">
-          </div>
-        </div>
-
-        <div>
-          <label class="block text-cq-muted mb-1 font-medium">專案方案簡述</label>
-          <input type="text" v-model="modalInsurance.form.planName" placeholder="FIRST LIFE · 8天全程海外雙全保障" class="w-full px-3 py-2 rounded-xl border border-cq-border bg-cq-wash text-cq-charcoal font-mono">
-        </div>
-
-        <div>
-          <label class="block text-cq-muted mb-1 font-medium">旅平險保障重點</label>
-          <textarea v-model="modalInsurance.form.section1Desc" rows="2" class="w-full px-3 py-2 rounded-xl border border-cq-border bg-cq-wash text-cq-charcoal"></textarea>
-        </div>
-
-        <div>
-          <label class="block text-cq-muted mb-1 font-medium">不便險保障重點</label>
-          <textarea v-model="modalInsurance.form.section2Desc" rows="2" class="w-full px-3 py-2 rounded-xl border border-cq-border bg-cq-wash text-cq-charcoal"></textarea>
-        </div>
-
-        <div>
-          <label class="block text-cq-muted mb-1 font-medium">投保/試算連結 URL</label>
-          <input type="text" v-model="modalInsurance.form.linkUrl" placeholder="https://..." class="w-full px-3 py-2 rounded-xl border border-cq-border bg-cq-wash text-cq-charcoal font-mono">
         </div>
 
         <!-- 醒目提醒設定 -->
@@ -5086,12 +5472,309 @@
           form: {}
         });
 
+        // 常見國際與亞洲機場代號對照庫
+        const airportOptions = [
+          { code: 'TPE', name: '台北桃園' },
+          { code: 'TSA', name: '台北松山' },
+          { code: 'RMQ', name: '台中清泉崗' },
+          { code: 'KHH', name: '高雄小港' },
+          { code: 'HKG', name: '香港機場' },
+          { code: 'MFM', name: '澳門機場' },
+          { code: 'CKG', name: '重慶江北' },
+          { code: 'TFU', name: '成都天府' },
+          { code: 'CTU', name: '成都雙流' },
+          { code: 'PVG', name: '上海浦東' },
+          { code: 'SHA', name: '上海虹橋' },
+          { code: 'PEK', name: '北京首都' },
+          { code: 'PKX', name: '北京大興' },
+          { code: 'CAN', name: '廣州白雲' },
+          { code: 'SZX', name: '深圳寶安' },
+          { code: 'XMN', name: '廈門高崎' },
+          { code: 'HGH', name: '杭州蕭山' },
+          { code: 'NRT', name: '東京成田' },
+          { code: 'HND', name: '東京羽田' },
+          { code: 'KIX', name: '大阪關西' },
+          { code: 'NGO', name: '名古屋中部' },
+          { code: 'FUK', name: '福岡機場' },
+          { code: 'CTS', name: '札幌新千歲' },
+          { code: 'OKA', name: '沖繩那霸' },
+          { code: 'SDJ', name: '仙台機場' },
+          { code: 'ICN', name: '首爾仁川' },
+          { code: 'GMP', name: '首爾金浦' },
+          { code: 'PUS', name: '釜山金海' },
+          { code: 'CJU', name: '濟州國際' },
+          { code: 'BKK', name: '曼谷素萬那普' },
+          { code: 'DMK', name: '曼谷廊曼' },
+          { code: 'CNX', name: '清邁國際' },
+          { code: 'HKT', name: '普吉國際' },
+          { code: 'HAN', name: '河內內排' },
+          { code: 'SGN', name: '胡志明新山一' },
+          { code: 'DAD', name: '峴港國際' },
+          { code: 'SIN', name: '新加坡樟宜' },
+          { code: 'KUL', name: '吉隆坡國際' },
+          { code: 'BKI', name: '亞庇國際' },
+          { code: 'MNL', name: '馬尼拉尼諾伊' },
+          { code: 'CEB', name: '宿霧麥克坦' },
+          { code: 'DPS', name: '峇里島伍拉賴' },
+          { code: 'LAX', name: '洛杉磯國際' },
+          { code: 'SFO', name: '舊金山國際' },
+          { code: 'JFK', name: '紐約甘迺迪' },
+          { code: 'YVR', name: '溫哥華國際' },
+          { code: 'LHR', name: '倫敦希斯洛' },
+          { code: 'CDG', name: '巴黎戴高樂' },
+          { code: 'FRA', name: '法蘭克福' },
+          { code: 'AMS', name: '阿姆斯特丹' },
+          { code: 'SYD', name: '雪梨金斯福德' },
+          { code: 'MEL', name: '墨爾本機場' }
+        ];
+
+        // 常見航廈下拉選項
+        const terminalOptions = [
+          { value: 'T1', label: 'T1 (第一航廈)' },
+          { value: 'T2', label: 'T2 (第二航廈)' },
+          { value: 'T3', label: 'T3 (第三航廈)' },
+          { value: 'T4', label: 'T4 (第四航廈)' },
+          { value: 'T5', label: 'T5 (第五航廈)' },
+          { value: '國內線', label: '國內線航廈' },
+          { value: '國際線', label: '國際線航廈' },
+          { value: '北航廈', label: '北航廈 (North)' },
+          { value: '南航廈', label: '南航廈 (South)' },
+          { value: 'A航廈', label: 'A 航廈' },
+          { value: 'B航廈', label: 'B 航廈' },
+          { value: 'C航廈', label: 'C 航廈' }
+        ];
+
+        // 拆解舊有字串 (例如 "台北桃園 T2" -> { name: "台北桃園", terminal: "T2" })
+        const splitAirportAndTerminal = (fullStr) => {
+          const raw = (fullStr || '').trim();
+          if (!raw) return { name: '', terminal: '' };
+          const parts = raw.split(/\s+/);
+          if (parts.length >= 2) {
+            return {
+              name: parts.slice(0, -1).join(' '),
+              terminal: parts[parts.length - 1]
+            };
+          }
+          return { name: raw, terminal: '' };
+        };
+
+        // 組合機場簡稱與航廈顯示字串
+        const syncAirportDisplay = (prefix) => {
+          const name = (modalFlight.form[prefix + 'Name'] || '').trim();
+          const terminal = (modalFlight.form[prefix + 'Terminal'] || '').trim();
+          modalFlight.form[prefix + 'Airport'] = [name, terminal].filter(Boolean).join(' ');
+        };
+
+        // 選擇機場代號下拉選單時自動帶入機場簡稱或切換為自訂輸入框
+        const onAirportCodeSelect = (prefix) => {
+          const code = modalFlight.form[prefix + 'Code'];
+          if (code === 'CUSTOM') {
+            modalFlight.form[prefix + 'IsCustomCode'] = true;
+            modalFlight.form[prefix + 'Code'] = '';
+            modalFlight.form[prefix + 'Name'] = '';
+            syncAirportDisplay(prefix);
+            return;
+          }
+          const found = airportOptions.find(a => a.code === code);
+          if (found) {
+            modalFlight.form[prefix + 'Name'] = found.name;
+          }
+          syncAirportDisplay(prefix);
+        };
+
+        // 返回預設機場代號下拉選單
+        const resetCustomAirportCode = (prefix) => {
+          modalFlight.form[prefix + 'IsCustomCode'] = false;
+          modalFlight.form[prefix + 'Code'] = '';
+          modalFlight.form[prefix + 'Name'] = '';
+          syncAirportDisplay(prefix);
+        };
+
+        // 選擇航廈下拉選單
+        const onTerminalSelect = (prefix) => {
+          const term = modalFlight.form[prefix + 'Terminal'];
+          if (term === 'CUSTOM') {
+            modalFlight.form[prefix + 'IsCustomTerminal'] = true;
+            modalFlight.form[prefix + 'Terminal'] = '';
+          }
+          syncAirportDisplay(prefix);
+        };
+
+        // 返回預設航廈下拉選單
+        const resetCustomTerminal = (prefix) => {
+          modalFlight.form[prefix + 'IsCustomTerminal'] = false;
+          modalFlight.form[prefix + 'Terminal'] = '';
+          syncAirportDisplay(prefix);
+        };
+
+        // 計算兩組 HH:mm 時間差（支援跨日過夜自動加 24 小時）
+        const computeDurationText = (arrTime, depTime, forceOvernight = false) => {
+          if (!arrTime || !depTime || !arrTime.includes(':') || !depTime.includes(':')) return '';
+          const [arrH, arrM] = arrTime.split(':').map(Number);
+          const [depH, depM] = depTime.split(':').map(Number);
+          if (isNaN(arrH) || isNaN(arrM) || isNaN(depH) || isNaN(depM)) return '';
+
+          const arrTotal = arrH * 60 + arrM;
+          let depTotal = depH * 60 + depM;
+          if (depTotal < arrTotal || (forceOvernight && depTotal <= arrTotal)) {
+            depTotal += 24 * 60;
+          }
+          const diff = depTotal - arrTotal;
+          if (diff <= 0) return '';
+          const hrs = Math.floor(diff / 60);
+          const mins = diff % 60;
+          if (hrs > 0 && mins > 0) return `${hrs} 小時 ${mins} 分`;
+          if (hrs > 0) return `${hrs} 小時`;
+          return `${mins} 分鐘`;
+        };
+
+        // 自動重新計算去程與回程的轉機停留時間
+        const recalcLayoverDurations = () => {
+          if (modalFlight.form.outboundHasTransfer) {
+            const outDur = computeDurationText(
+              modalFlight.form.outboundLeg1ArrTime,
+              modalFlight.form.outboundLeg2DepTime,
+              modalFlight.form.outboundIsOvernight
+            );
+            if (outDur) modalFlight.form.outboundLayoverDuration = outDur;
+          }
+          if (modalFlight.form.inboundHasTransfer) {
+            const inDur = computeDurationText(
+              modalFlight.form.inboundLeg1ArrTime,
+              modalFlight.form.inboundLeg2DepTime,
+              modalFlight.form.inboundIsOvernight
+            );
+            if (inDur) modalFlight.form.inboundLayoverDuration = inDur;
+          }
+        };
+
+        // 一鍵清空航班所有欄位方便重新填寫
+        const clearFlightForm = () => {
+          modalFlight.form = {
+            airlineName: '',
+            outboundCabinClass: '經濟艙',
+            inboundCabinClass: '經濟艙',
+            subtitle: '',
+            tagText: '',
+
+            outboundDate: tripMeta.startDate || '',
+            outboundHasTransfer: false,
+            outboundIsOvernight: false,
+            outboundOvernightHotel: '',
+            outboundIsSameTerminal: true,
+            outboundIsBaggageDirect: true,
+            outboundLayoverDuration: '',
+
+            outboundLeg1FlightNo: '',
+            outboundLeg1DepTime: '',
+            outboundLeg1DepCode: '',
+            outboundLeg1DepIsCustomCode: false,
+            outboundLeg1DepName: '',
+            outboundLeg1DepTerminal: '',
+            outboundLeg1DepIsCustomTerminal: false,
+            outboundLeg1DepAirport: '',
+            outboundLeg1ArrTime: '',
+            outboundLeg1ArrCode: '',
+            outboundLeg1ArrIsCustomCode: false,
+            outboundLeg1ArrName: '',
+            outboundLeg1ArrTerminal: '',
+            outboundLeg1ArrIsCustomTerminal: false,
+            outboundLeg1ArrAirport: '',
+
+            outboundLeg2FlightNo: '',
+            outboundLeg2DepTime: '',
+            outboundLeg2DepCode: '',
+            outboundLeg2DepIsCustomCode: false,
+            outboundLeg2DepName: '',
+            outboundLeg2DepTerminal: '',
+            outboundLeg2DepIsCustomTerminal: false,
+            outboundLeg2DepAirport: '',
+            outboundLeg2ArrTime: '',
+            outboundLeg2ArrCode: '',
+            outboundLeg2ArrIsCustomCode: false,
+            outboundLeg2ArrName: '',
+            outboundLeg2ArrTerminal: '',
+            outboundLeg2ArrIsCustomTerminal: false,
+            outboundLeg2ArrAirport: '',
+
+            inboundDate: tripMeta.endDate || '',
+            inboundHasTransfer: false,
+            inboundIsOvernight: false,
+            inboundOvernightHotel: '',
+            inboundIsSameTerminal: true,
+            inboundIsBaggageDirect: true,
+            inboundLayoverDuration: '',
+
+            inboundLeg1FlightNo: '',
+            inboundLeg1DepTime: '',
+            inboundLeg1DepCode: '',
+            inboundLeg1DepIsCustomCode: false,
+            inboundLeg1DepName: '',
+            inboundLeg1DepTerminal: '',
+            inboundLeg1DepIsCustomTerminal: false,
+            inboundLeg1DepAirport: '',
+            inboundLeg1ArrTime: '',
+            inboundLeg1ArrCode: '',
+            inboundLeg1ArrIsCustomCode: false,
+            inboundLeg1ArrName: '',
+            inboundLeg1ArrTerminal: '',
+            inboundLeg1ArrIsCustomTerminal: false,
+            inboundLeg1ArrAirport: '',
+
+            inboundLeg2FlightNo: '',
+            inboundLeg2DepTime: '',
+            inboundLeg2DepCode: '',
+            inboundLeg2DepIsCustomCode: false,
+            inboundLeg2DepName: '',
+            inboundLeg2DepTerminal: '',
+            inboundLeg2DepIsCustomTerminal: false,
+            inboundLeg2DepAirport: '',
+            inboundLeg2ArrTime: '',
+            inboundLeg2ArrCode: '',
+            inboundLeg2ArrIsCustomCode: false,
+            inboundLeg2ArrName: '',
+            inboundLeg2ArrTerminal: '',
+            inboundLeg2ArrIsCustomTerminal: false,
+            inboundLeg2ArrAirport: '',
+
+            alertTitle: '',
+            alertText: '',
+            alertType: 'warning'
+          };
+          showToast('已清空所有航班欄位，可直接選擇新航程');
+        };
+
         const openEditFlightModal = () => {
-          modalFlight.form = { ...flightInfo.value };
+          const f = { ...flightInfo.value };
+          const prefixes = [
+            'outboundLeg1Dep', 'outboundLeg1Arr',
+            'outboundLeg2Dep', 'outboundLeg2Arr',
+            'inboundLeg1Dep', 'inboundLeg1Arr',
+            'inboundLeg2Dep', 'inboundLeg2Arr'
+          ];
+          prefixes.forEach(p => {
+            if (f[p + 'Name'] === undefined) {
+              const parsed = splitAirportAndTerminal(f[p + 'Airport']);
+              f[p + 'Name'] = parsed.name;
+              f[p + 'Terminal'] = parsed.terminal;
+            }
+            const codeVal = (f[p + 'Code'] || '').trim();
+            f[p + 'IsCustomCode'] = Boolean(codeVal && !airportOptions.some(a => a.code === codeVal));
+            const termVal = (f[p + 'Terminal'] || '').trim();
+            f[p + 'IsCustomTerminal'] = Boolean(termVal && !terminalOptions.some(t => t.value === termVal));
+          });
+          modalFlight.form = f;
           modalFlight.isOpen = true;
         };
 
         const submitSaveFlight = () => {
+          const prefixes = [
+            'outboundLeg1Dep', 'outboundLeg1Arr',
+            'outboundLeg2Dep', 'outboundLeg2Arr',
+            'inboundLeg1Dep', 'inboundLeg1Arr',
+            'inboundLeg2Dep', 'inboundLeg2Arr'
+          ];
+          prefixes.forEach(p => syncAirportDisplay(p));
           flightInfo.value = { ...modalFlight.form };
           saveAllToOfflineStorage();
           modalFlight.isOpen = false;
@@ -6143,6 +6826,15 @@
           deleteStay,
           flightInfo,
           modalFlight,
+          airportOptions,
+          terminalOptions,
+          onAirportCodeSelect,
+          resetCustomAirportCode,
+          onTerminalSelect,
+          resetCustomTerminal,
+          syncAirportDisplay,
+          recalcLayoverDurations,
+          clearFlightForm,
           openEditFlightModal,
           submitSaveFlight,
           insuranceInfo,
