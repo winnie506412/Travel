@@ -148,10 +148,10 @@
 <div id="app" class="w-full min-h-screen bg-cq-wash relative pb-28 flex flex-col">
 
   <!-- 1. 主導航頂欄 (Header) -->
-  <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-cq-border px-4 pt-3 pb-2.5 safe-top w-full shadow-sm space-y-2">
-    <!-- 上層：旅遊主題、日程標記與離線標籤 -->
-    <div class="flex items-center justify-between w-full">
-      <div class="flex items-center space-x-2.5 min-w-0 flex-1">
+  <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-cq-border px-3.5 pt-2.5 pb-2 safe-top w-full shadow-sm space-y-2">
+    <!-- 上層：旅遊主題、日程標記與狀態標籤 -->
+    <div class="flex items-center justify-between gap-2 w-full">
+      <div class="flex items-center space-x-2 min-w-0 flex-1">
         <button 
           type="button"
           @click="openEditTripTitleModal" 
@@ -173,74 +173,72 @@
         </div>
       </div>
 
-      <!-- 離線就緒標籤 -->
-      <span 
-        class="text-[9px] font-mono px-2 py-0.5 rounded-full font-semibold border flex items-center space-x-1.5 flex-shrink-0 transition-colors"
-        :class="isOnline ? 'bg-cq-mossLight text-cq-moss border-cq-moss/30' : 'bg-amber-100 text-amber-800 border-amber-300'"
-      >
-        <span class="w-1.5 h-1.5 rounded-full animate-pulse" :class="isOnline ? 'bg-cq-moss' : 'bg-amber-500'"></span>
-        <span>{{ isOnline ? '已連線同步' : '離線模式 · 隨開隨用' }}</span>
-      </span>
-    </div>
-
-    <!-- 下層：氣溫、即時匯率與行程分享按鈕 -->
-    <div class="flex items-center justify-between pt-1 border-t border-cq-border/40 w-full">
-      <div class="flex items-center space-x-1.5 flex-1 min-w-0">
+      <!-- 右上角：天氣 + 匯率 + 連線小燈號 -->
+      <div class="flex items-center space-x-1.5 flex-shrink-0">
         <!-- 天氣鈕 -->
         <button 
           type="button"
           @click="openCityWeatherModal" 
-          class="bg-cq-mossLight text-cq-moss px-2.5 py-1 rounded-full text-xs font-mono flex items-center space-x-1 border border-cq-moss/20 active:scale-95 transition"
+          class="bg-cq-mossLight text-cq-moss px-2 py-1 rounded-full text-[11px] font-mono flex items-center space-x-1 border border-cq-moss/25 active:scale-95 transition whitespace-nowrap flex-shrink-0"
           title="點擊切換城市與即時天氣"
         >
           <i class="fa-solid fa-cloud-sun text-[10px]"></i>
-          <span>{{ currentCity.name }} {{ weather.temp }}°C</span>
+          <span>{{ currentCity.name }} {{ weather.temp }}°</span>
         </button>
 
         <!-- 匯率鈕 -->
         <button 
           type="button"
           @click="openCurrencyModal" 
-          class="bg-cq-goldLight text-cq-gold px-2.5 py-1 rounded-full text-xs font-mono flex items-center space-x-1 border border-cq-gold/20 active:scale-95 transition"
+          class="bg-cq-goldLight text-cq-gold px-2 py-1 rounded-full text-[11px] font-mono flex items-center space-x-1 border border-cq-gold/25 active:scale-95 transition whitespace-nowrap flex-shrink-0"
           title="點擊切換幣別與更新匯率"
         >
-          <span class="text-[10px]">{{ currentCurrency.symbol }}</span>
+          <span class="text-[10px] font-bold">{{ currentCurrency.symbol }}</span>
           <span>1:{{ exchangeRate.toFixed(2) }}</span>
         </button>
+
+        <!-- 精簡連線狀態圓點徽章 -->
+        <span 
+          class="w-6 h-6 rounded-full border flex items-center justify-center flex-shrink-0 transition-colors"
+          :class="isOnline ? 'bg-cq-mossLight text-cq-moss border-cq-moss/30' : 'bg-amber-100 text-amber-800 border-amber-300'"
+          :title="isOnline ? '已連線同步' : '離線模式 · 隨開隨用'"
+        >
+          <span class="w-2 h-2 rounded-full animate-pulse" :class="isOnline ? 'bg-cq-moss' : 'bg-amber-500'"></span>
+        </span>
       </div>
+    </div>
 
-      <!-- 右側按鈕組：AI 辨識 + 匯出 PDF + 分享行程 -->
-      <div class="flex items-center space-x-1.5 flex-shrink-0">
-        <button 
-          type="button"
-          @click="openAiParseModal" 
-          class="bg-cq-goldLight text-cq-gold border border-cq-gold/40 px-2.5 py-1 rounded-full text-xs font-serif-cq font-bold flex items-center space-x-1 shadow-2xs hover:bg-cq-gold hover:text-white transition active:scale-95"
-          title="上傳截圖/收據或貼上文字，由 AI 自動辨識新增項目"
-        >
-          <i class="fa-solid fa-wand-magic-sparkles text-[10px]"></i>
-          <span>AI 辨識</span>
-        </button>
+    <!-- 下層：三大核心功能快捷列（AI 辨識、匯出 PDF、分享行程） -->
+    <div class="grid grid-cols-3 gap-1.5 pt-1.5 border-t border-cq-border/40 w-full">
+      <button 
+        type="button"
+        @click="openAiParseModal" 
+        class="bg-cq-goldLight text-cq-gold border border-cq-gold/40 py-1.5 px-2 rounded-xl text-xs font-serif-cq font-bold flex items-center justify-center space-x-1 shadow-2xs hover:bg-cq-gold hover:text-white transition active:scale-95 whitespace-nowrap"
+        title="上傳截圖/收據或貼上文字，由 AI 自動辨識新增項目"
+      >
+        <i class="fa-solid fa-wand-magic-sparkles text-[10px]"></i>
+        <span>AI 辨識</span>
+      </button>
 
-        <button 
-          type="button"
-          @click="exportToPdf" 
-          class="bg-cq-charcoal text-white px-2.5 py-1 rounded-full text-xs font-serif-cq flex items-center space-x-1 shadow-sm hover:bg-black transition active:scale-95"
-          title="將整本旅遊手帳排版為 A4 並儲存為 PDF"
-        >
-          <i class="fa-solid fa-file-pdf text-[10px] text-cq-gold"></i>
-          <span>匯出 PDF</span>
-        </button>
+      <button 
+        type="button"
+        @click="exportToPdf" 
+        class="bg-cq-charcoal text-white py-1.5 px-2 rounded-xl text-xs font-serif-cq flex items-center justify-center space-x-1 shadow-2xs hover:bg-black transition active:scale-95 whitespace-nowrap"
+        title="將整本旅遊手帳排版為 A4 並儲存為 PDF"
+      >
+        <i class="fa-solid fa-file-pdf text-[10px] text-cq-gold"></i>
+        <span>匯出 PDF</span>
+      </button>
 
-        <button 
-          type="button"
-          @click="generateShareUrl" 
-          class="bg-cq-cinnabar text-white px-3 py-1 rounded-full text-xs font-serif-cq flex items-center space-x-1 shadow-sm hover:bg-black transition active:scale-95"
-          title="將目前排好的行程與預算產生分享連結傳給朋友"
-        >
-          <i class="fa-solid fa-share-nodes text-[10px]"></i>
-          <span>分享行程</span>
-        </button>
-      </div>
+      <button 
+        type="button"
+        @click="generateShareUrl" 
+        class="bg-cq-cinnabar text-white py-1.5 px-2 rounded-xl text-xs font-serif-cq flex items-center justify-center space-x-1 shadow-2xs hover:bg-black transition active:scale-95 whitespace-nowrap"
+        title="將目前排好的行程與預算產生分享連結傳給朋友"
+      >
+        <i class="fa-solid fa-share-nodes text-[10px]"></i>
+        <span>分享行程</span>
+      </button>
     </div>
   </header>
 
