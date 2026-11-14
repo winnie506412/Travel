@@ -4269,7 +4269,7 @@
             <label class="flex-1 py-2.5 px-3 border border-dashed border-cq-gold/60 bg-cq-goldLight/30 rounded-xl text-center cursor-pointer hover:bg-cq-goldLight/60 transition flex items-center justify-center space-x-1.5 text-cq-charcoal">
               <i class="fa-solid fa-camera text-xs text-cq-gold"></i>
               <span class="text-[11px] font-medium">{{ modalAiParse.imageBase64 ? '重新選擇截圖/照片' : '上傳截圖 / 收據 / 確認單照片' }}</span>
-              <input type="file" accept="image/*" @change="onAiImageUpload" class="hidden">
+              <input type="file" accept="image/*,.heic,.heif" @change="onAiImageUpload" class="hidden">
             </label>
           </div>
 
@@ -4420,18 +4420,16 @@
 <div id="pdf-print-sheet" class="hidden font-sans text-cq-charcoal space-y-5"></div>
 
 <script>
-  // 圖片自動輕量壓縮器
+  // 圖片自動輕量壓縮器 (支援手機高畫素照片與異常格式容錯)
   const compressImage = (file, maxWidth = 600, quality = 0.65) => {
     return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = (event) => {
-        const img = new Image();
-        img.src = event.target.result;
-        img.onload = () => {
+      const objectUrl = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = () => {
+        try {
           const canvas = document.createElement('canvas');
-          let width = img.width;
-          let height = img.height;
+          let width = img.naturalWidth || img.width;
+          let height = img.naturalHeight || img.height;
           if (width > maxWidth) {
             height = Math.round((height * maxWidth) / width);
             width = maxWidth;
@@ -4439,12 +4437,26 @@
           canvas.width = width;
           canvas.height = height;
           const ctx = canvas.getContext('2d');
+          ctx.fillStyle = '#FFFFFF';
+          ctx.fillRect(0, 0, width, height);
           ctx.drawImage(img, 0, 0, width, height);
-          resolve(canvas.toDataURL('image/jpeg', quality));
-        };
-        img.onerror = (err) => reject(err);
+          const dataUrl = canvas.toDataURL('image/jpeg', quality);
+          URL.revokeObjectURL(objectUrl);
+          resolve(dataUrl);
+        } catch (err) {
+          URL.revokeObjectURL(objectUrl);
+          reject(err);
+        }
       };
-      reader.onerror = (err) => reject(err);
+      img.onerror = () => {
+        URL.revokeObjectURL(objectUrl);
+        // 若瀏覽器無法以 Image 轉碼 (如部分特殊格式)，退回 FileReader 直接讀取
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(e.target.result);
+        reader.onerror = (err) => reject(err);
+        reader.readAsDataURL(file);
+      };
+      img.src = objectUrl;
     });
   };
 
@@ -7304,11 +7316,16 @@
           const file = event.target.files && event.target.files[0];
           if (!file) return;
           try {
-            showToast('正在處理辨識圖片...');
-            modalAiParse.imageBase64 = await compressImage(file, 900, 0.8);
+            showToast('正在處理手機圖片...');
+            const compressed = await compressImage(file, 768, 0.72);
+            if (!compressed || !compressed.startsWith('data:image/')) {
+              throw new Error('不支援的圖片格式');
+            }
+            modalAiParse.imageBase64 = compressed;
             modalAiParse.errorMsg = '';
+            showToast('圖片已載入，請點擊「開始 AI 智慧辨識」');
           } catch (e) {
-            modalAiParse.errorMsg = '圖片讀取失敗，請重試';
+            modalAiParse.errorMsg = '手機圖片格式無法讀取（若為 iPhone 實況/HEIC 照片，建議先截圖後再上傳截圖）';
           }
           event.target.value = '';
         };
@@ -7556,11 +7573,14 @@
               parts.push({ text: `使用者提供的文字內容：\n${modalAiParse.rawText.trim()}` });
             }
             if (modalAiParse.imageBase64) {
-              const base64Clean = modalAiParse.imageBase64.split(',')[1];
+              const match = modalAiParse.imageBase64.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/);
+              if (!match) {
+                throw new Error('INVALID_IMAGE_FORMAT');
+              }
               parts.push({
                 inlineData: {
-                  mimeType: "image/jpeg",
-                  data: base64Clean
+                  mimeType: match[1],
+                  data: match[2]
                 }
               });
             }
@@ -7580,11 +7600,13 @@
           } catch (err) {
             console.error('AI 辨識失敗:', err);
             const msg = String(err.message || '');
-            if (msg.includes('HTTP_400') || msg.includes('HTTP_403') || msg.includes('API key')) {
+            if (msg.includes('INVALID_IMAGE_FORMAT')) {
+              modalAiParse.errorMsg = '手機照片格式不支援直接解析，請先在手機上「螢幕截圖」後再上傳截圖即可辨識！';
+            } else if (msg.includes('HTTP_400') || msg.includes('HTTP_403') || msg.includes('API key')) {
               modalAiParse.showKeyConfig = true;
-              modalAiParse.errorMsg = 'API Key 無效或尚未設定，請檢查上方的 Google Gemini API Key 是否正確。';
+              modalAiParse.errorMsg = '手機端尚未設定或 API Key 無效（電腦與手機的瀏覽器資料是分開的，請在手機上也貼上一次 Gemini API Key 儲存）。';
             } else {
-              modalAiParse.errorMsg = '辨識過程發生錯誤，請確認圖片清晰或網路連線正常後重試。';
+              modalAiParse.errorMsg = `辨識發生錯誤 (${msg.slice(0, 60)})，建議將照片「截圖」後上傳或檢查網路連線。`;
             }
           } finally {
             modalAiParse.isLoading = false;
