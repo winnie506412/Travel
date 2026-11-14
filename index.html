@@ -200,6 +200,15 @@
         <!-- 匯率鈕 -->
         <button 
           type="button"
+          @click="openCurrencyModal" 
+          class="bg-cq-goldLight text-cq-gold px-2.5 py-1 rounded-full text-xs font-mono flex items-center space-x-1 border border-cq-gold/20 active:scale-95 transition"
+          title="點擊切換幣別與更新匯率"
+        >
+          <span class="text-[10px]">{{ currentCurrency.symbol }}</span>
+          <span>1:{{ exchangeRate.toFixed(2) }}</span>
+        </button>
+      </div>
+
       <!-- 右側按鈕組：AI 辨識 + 匯出 PDF + 分享行程 -->
       <div class="flex items-center space-x-1.5 flex-shrink-0">
         <button 
