@@ -4293,7 +4293,42 @@
           <span>{{ modalAiParse.isLoading ? 'AI 正在解析內容中...' : '開始 AI 智慧辨識' }}</span>
         </button>
 
-        <p v-if="modalAiParse.errorMsg" class="text-[11px] text-cq-cinnabar font-medium bg-cq-cinnabarLight/50 p-2 rounded-xl border border-cq-cinnabar/30">
+        <!-- GitHub Pages 獨立部署用：Gemini API Key 選填摺疊區 -->
+        <div class="border border-cq-border rounded-xl bg-cq-wash/50 overflow-hidden">
+          <button 
+            type="button" 
+            @click="modalAiParse.showKeyConfig = !modalAiParse.showKeyConfig"
+            class="w-full px-3 py-1.5 text-[11px] text-cq-muted hover:text-cq-charcoal flex items-center justify-between"
+          >
+            <span class="flex items-center space-x-1">
+              <i class="fa-solid fa-key text-[10px] text-cq-gold"></i>
+              <span>{{ modalAiParse.customApiKey ? '已設定專屬 Gemini API Key ✓' : '在 GitHub Pages 使用圖片辨識？點此設定 API Key' }}</span>
+            </span>
+            <i class="fa-solid text-[10px]" :class="modalAiParse.showKeyConfig ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+          </button>
+          <div v-show="modalAiParse.showKeyConfig" class="p-2.5 pt-1 border-t border-cq-border/60 space-y-1.5">
+            <p class="text-[10px] text-cq-muted leading-relaxed">
+              若您部署在 GitHub Pages 等外部網址，需填入免費的 Google Gemini API Key（僅存於您本機瀏覽器，絕不外傳）：
+            </p>
+            <div class="flex space-x-1.5">
+              <input 
+                type="password" 
+                v-model="modalAiParse.customApiKey" 
+                placeholder="貼上 AIzaSy... 開頭的金鑰" 
+                class="flex-1 px-2.5 py-1.5 rounded-lg border border-cq-border bg-white text-cq-charcoal font-mono text-xs focus:outline-none focus:border-cq-gold"
+              >
+              <button 
+                type="button" 
+                @click="saveCustomAiKey" 
+                class="px-3 py-1.5 bg-cq-charcoal text-white rounded-lg text-[11px] font-medium active:scale-95"
+              >
+                儲存
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <p v-if="modalAiParse.errorMsg" class="text-[11px] text-cq-cinnabar font-medium bg-cq-cinnabarLight/50 p-2 rounded-xl border border-cq-cinnabar/30 whitespace-pre-line">
           {{ modalAiParse.errorMsg }}
         </p>
 
@@ -7218,6 +7253,7 @@
         };
 
         // ==================== ✨ AI 智慧辨識快填系統 ====================
+        const AI_KEY_STORAGE = 'cq_user_gemini_api_key_v1';
         const modalAiParse = reactive({
           isOpen: false,
           targetType: 'expense', // 'expense' | 'stay' | 'flight' | 'foodOrEvent'
@@ -7227,8 +7263,24 @@
           rawText: '',
           isLoading: false,
           errorMsg: '',
-          previewData: null
+          previewData: null,
+          showKeyConfig: false,
+          customApiKey: localStorage.getItem(AI_KEY_STORAGE) || ''
         });
+
+        const saveCustomAiKey = () => {
+          const k = (modalAiParse.customApiKey || '').trim();
+          modalAiParse.customApiKey = k;
+          if (k) {
+            localStorage.setItem(AI_KEY_STORAGE, k);
+            showToast('已儲存專屬 API Key 至本機瀏覽器！');
+            modalAiParse.showKeyConfig = false;
+            modalAiParse.errorMsg = '';
+          } else {
+            localStorage.removeItem(AI_KEY_STORAGE);
+            showToast('已清除本機 API Key');
+          }
+        };
 
         const openAiParseModal = () => {
           modalAiParse.targetDayIndex = selectedDayIndex.value || 0;
@@ -7261,8 +7313,73 @@
           event.target.value = '';
         };
 
+        // 免 API Key 本機離線/備援文字智慧解析器
+        const localFallbackParseText = (text, targetType) => {
+          const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+          if (lines.length === 0) return null;
+
+          if (targetType === 'expense') {
+            const results = [];
+            lines.forEach(line => {
+              const numMatch = line.match(/([0-9]+(?:\.[0-9]+)?)/);
+              if (numMatch) {
+                const val = parseFloat(numMatch[1]);
+                const title = line.replace(numMatch[0], '').replace(/[$¥₩฿₫€NT元塊]/g, '').trim() || '消費項目';
+                const isCard = /刷卡|信用卡|card|visa|master|jcb/i.test(line);
+                results.push({
+                  title,
+                  category: '餐飲美食',
+                  paymentMethod: isCard ? 'card' : 'cash',
+                  amountForeign: val,
+                  amountTwd: Math.round(val * exchangeRate.value),
+                  date: getTodayDateString(),
+                  time: '',
+                  note: ''
+                });
+              }
+            });
+            return results.length > 0 ? results : null;
+          }
+
+          if (targetType === 'stay') {
+            const hotelName = lines[0].replace(/^(飯店|住宿|酒店|民宿)[:：\s]*/i, '');
+            const addrLine = lines.find(l => /地址|路|街|號|區|市|Road|St|Ave/i.test(l) && l !== lines[0]) || '';
+            const phoneLine = lines.find(l => /電話|Tel|Phone|\+?\d[\d\-\s]{6,}/i.test(l)) || '';
+            const codeLine = lines.find(l => /密碼|門禁|pin|code|pass/i.test(l)) || '';
+            return {
+              hotelName,
+              staySummary: '',
+              priceText: '',
+              address: addrLine.replace(/^地址[:：\s]*/i, ''),
+              phone: phoneLine.replace(/^(電話|Tel|Phone)[:：\s]*/i, ''),
+              roomType: '',
+              accessCode: codeLine,
+              notes: lines.slice(1).join('\n')
+            };
+          }
+
+          if (targetType === 'foodOrEvent') {
+            return lines.map(line => {
+              const parts = line.split(/[｜|—\-–：:]/);
+              const name = (parts[0] || line).replace(/^[0-9]+[.、)\s]+/, '').trim();
+              const rest = parts.slice(1).join(' ').trim();
+              return {
+                name,
+                category: '特色推薦',
+                address: /路|街|號|區|市/.test(rest) ? rest : '',
+                duration: '1～1.5小時',
+                priceCny: null,
+                recommendations: [],
+                note: rest
+              };
+            });
+          }
+
+          return null;
+        };
+
         const callGeminiWithBackoff = async (payload) => {
-          const apiKey = "";
+          const apiKey = (modalAiParse.customApiKey || "").trim();
           const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
           const delays = [1000, 2000, 4000];
           for (let attempt = 0; attempt <= delays.length; attempt++) {
@@ -7278,7 +7395,12 @@
               await new Promise(r => setTimeout(r, delays[attempt]));
               continue;
             }
-            throw new Error(`API 請求失敗 (${res.status})`);
+            let errDetail = '';
+            try {
+              const errJson = await res.json();
+              errDetail = errJson?.error?.message || '';
+            } catch (e) {}
+            throw new Error(`HTTP_${res.status}:${errDetail}`);
           }
         };
 
@@ -7287,14 +7409,46 @@
             modalAiParse.errorMsg = '請先上傳截圖／照片，或貼上文字內容再進行辨識！';
             return;
           }
-          if (!navigator.onLine) {
-            modalAiParse.errorMsg = 'AI 智慧辨識需要網路連線，請連網後再試。';
-            return;
-          }
 
           modalAiParse.isLoading = true;
           modalAiParse.errorMsg = '';
           modalAiParse.previewData = null;
+
+          // 判斷是否為外部獨立網域（例如 GitHub Pages）且尚未設定 API Key
+          const isExternalHost = window.location.hostname.includes('github.io') || window.location.protocol === 'file:';
+          const hasUserKey = Boolean((modalAiParse.customApiKey || '').trim());
+
+          if (isExternalHost && !hasUserKey) {
+            // 若有貼上文字，自動啟用本機智慧解析；若僅上傳圖片則引導填入免費 API Key
+            if (modalAiParse.rawText.trim() && !modalAiParse.imageBase64) {
+              const fallbackRes = localFallbackParseText(modalAiParse.rawText.trim(), modalAiParse.targetType);
+              if (fallbackRes) {
+                modalAiParse.previewData = fallbackRes;
+                modalAiParse.isLoading = false;
+                showToast('已使用本機智慧文字解析完成（無需 API Key）！');
+                return;
+              }
+            }
+            modalAiParse.isLoading = false;
+            modalAiParse.showKeyConfig = true;
+            modalAiParse.errorMsg = '偵測到您正在 GitHub Pages 獨立網址使用：\n圖片截圖辨識需先於上方填入您的免費 Google Gemini API Key（設定一次即永久保存在本機）。';
+            return;
+          }
+
+          if (!navigator.onLine) {
+            if (modalAiParse.rawText.trim()) {
+              const offlineRes = localFallbackParseText(modalAiParse.rawText.trim(), modalAiParse.targetType);
+              if (offlineRes) {
+                modalAiParse.previewData = offlineRes;
+                modalAiParse.isLoading = false;
+                showToast('離線模式：已自動完成文字重點解析！');
+                return;
+              }
+            }
+            modalAiParse.isLoading = false;
+            modalAiParse.errorMsg = '目前處於離線狀態，無法進行圖片辨識，請連網後重試。';
+            return;
+          }
 
           try {
             let promptText = '';
@@ -7425,7 +7579,13 @@
             modalAiParse.previewData = JSON.parse(rawJsonText);
           } catch (err) {
             console.error('AI 辨識失敗:', err);
-            modalAiParse.errorMsg = '辨識過程發生錯誤，請確認圖片清晰或文字內容完整後重試。';
+            const msg = String(err.message || '');
+            if (msg.includes('HTTP_400') || msg.includes('HTTP_403') || msg.includes('API key')) {
+              modalAiParse.showKeyConfig = true;
+              modalAiParse.errorMsg = 'API Key 無效或尚未設定，請檢查上方的 Google Gemini API Key 是否正確。';
+            } else {
+              modalAiParse.errorMsg = '辨識過程發生錯誤，請確認圖片清晰或網路連線正常後重試。';
+            }
           } finally {
             modalAiParse.isLoading = false;
           }
@@ -7941,6 +8101,7 @@
           generateShareUrl,
           exportToPdf,
           modalAiParse,
+          saveCustomAiKey,
           openAiParseModal,
           onAiImageUpload,
           runAiRecognition,
