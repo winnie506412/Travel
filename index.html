@@ -945,15 +945,6 @@
                   <i class="fa-regular fa-copy text-[9px]"></i>
                   <span>複製名稱</span>
                 </button>
-                <a
-                  :href="getMapNavUrl(stay.hotelName, stay.address)"
-                  target="_blank"
-                  class="px-1.5 py-0.5 rounded-md bg-cq-mossLight hover:bg-cq-moss hover:text-white text-cq-moss border border-cq-moss/30 text-[10px] font-bold inline-flex items-center space-x-1 transition active:scale-95 whitespace-nowrap"
-                  title="開啟地圖導航"
-                >
-                  <i class="fa-solid fa-diamond-turn-right text-[9px]"></i>
-                  <span>導航</span>
-                </a>
               </div>
               
               <!-- 地址列 + 內嵌精巧複製按鈕 -->
@@ -2400,23 +2391,83 @@
           >
         </div>
 
-        <div class="grid grid-cols-2 gap-2">
-          <div>
-            <label class="block text-cq-muted mb-1 font-medium">啟程日期 (出發日)</label>
-            <input 
-              type="date" 
-              v-model="modalTripTitle.form.startDate" 
-              class="w-full px-2.5 py-2 rounded-xl border border-cq-border bg-cq-wash text-cq-charcoal font-mono text-xs focus:outline-none focus:border-cq-cinnabar"
+        <!-- 互動式區間月曆：點擊起始日再點結束日，一氣呵成 -->
+        <div class="p-3 bg-cq-wash/60 rounded-2xl border border-cq-border space-y-2.5 select-none">
+          <div class="flex items-center justify-between">
+            <span class="text-[11px] font-bold text-cq-charcoal flex items-center space-x-1">
+              <i class="fa-regular fa-calendar text-cq-cinnabar"></i>
+              <span>點選日期區間 (先點出發日 ➔ 再點回程日)</span>
+            </span>
+            <button 
+              type="button" 
+              v-if="modalTripTitle.form.startDate || modalTripTitle.form.endDate"
+              @click="clearRangeCalendarSelection"
+              class="text-[10px] text-cq-muted hover:text-cq-cinnabar underline"
             >
+              重選
+            </button>
           </div>
-          <div>
-            <label class="block text-cq-muted mb-1 font-medium">回程日期 (結束日)</label>
-            <input 
-              type="date" 
-              v-model="modalTripTitle.form.endDate" 
-              :min="modalTripTitle.form.startDate"
-              class="w-full px-2.5 py-2 rounded-xl border border-cq-border bg-cq-wash text-cq-charcoal font-mono text-xs focus:outline-none focus:border-cq-cinnabar"
+
+          <!-- 已選起訖日期顯示膠囊 -->
+          <div class="grid grid-cols-2 gap-2 text-center font-mono text-xs">
+            <div 
+              class="py-1.5 px-2 rounded-xl border transition"
+              :class="!modalTripTitle.form.startDate ? 'bg-cq-cinnabarLight/50 border-cq-cinnabar text-cq-cinnabar font-bold' : 'bg-white border-cq-border text-cq-charcoal'"
             >
+              <span class="text-[9px] text-cq-muted block font-sans">出發日</span>
+              <span class="font-bold">{{ modalTripTitle.form.startDate || '請點選日期' }}</span>
+            </div>
+            <div 
+              class="py-1.5 px-2 rounded-xl border transition"
+              :class="modalTripTitle.form.startDate && !modalTripTitle.form.endDate ? 'bg-cq-cinnabarLight/50 border-cq-cinnabar text-cq-cinnabar font-bold' : 'bg-white border-cq-border text-cq-charcoal'"
+            >
+              <span class="text-[9px] text-cq-muted block font-sans">回程日</span>
+              <span class="font-bold">{{ modalTripTitle.form.endDate || (modalTripTitle.form.startDate ? '請點選結束日' : '—') }}</span>
+            </div>
+          </div>
+
+          <!-- 月份切換列 -->
+          <div class="flex items-center justify-between pt-1">
+            <button type="button" @click="shiftRangeCalMonth(-1)" class="w-7 h-7 rounded-lg bg-white border border-cq-border hover:bg-cq-charcoal hover:text-white text-cq-charcoal flex items-center justify-center text-xs transition active:scale-95">
+              <i class="fa-solid fa-chevron-left text-[10px]"></i>
+            </button>
+            <span class="font-serif-cq font-bold text-xs text-cq-charcoal tracking-wide">
+              {{ rangeCalYear }} 年 {{ rangeCalMonth + 1 }} 月
+            </span>
+            <button type="button" @click="shiftRangeCalMonth(1)" class="w-7 h-7 rounded-lg bg-white border border-cq-border hover:bg-cq-charcoal hover:text-white text-cq-charcoal flex items-center justify-center text-xs transition active:scale-95">
+              <i class="fa-solid fa-chevron-right text-[10px]"></i>
+            </button>
+          </div>
+
+          <!-- 星期標頭 -->
+          <div class="grid grid-cols-7 text-center text-[10px] font-mono text-cq-muted">
+            <span class="text-cq-cinnabar">日</span>
+            <span>一</span>
+            <span>二</span>
+            <span>三</span>
+            <span>四</span>
+            <span>五</span>
+            <span class="text-cq-moss">六</span>
+          </div>
+
+          <!-- 日期格子 -->
+          <div class="grid grid-cols-7 gap-y-1 text-center font-mono text-xs">
+            <div 
+              v-for="(cell, cIdx) in rangeCalendarCells" 
+              :key="'cal-' + cIdx"
+              class="flex items-center justify-center"
+            >
+              <button
+                v-if="cell.dateStr"
+                type="button"
+                @click="onRangeCalendarDayClick(cell.dateStr)"
+                class="w-8 h-8 text-xs font-medium transition flex items-center justify-center relative"
+                :class="getRangeCellClass(cell.dateStr)"
+              >
+                {{ cell.day }}
+              </button>
+              <span v-else class="w-8 h-8"></span>
+            </div>
           </div>
         </div>
 
@@ -5020,11 +5071,85 @@
           }
         });
 
+        // 互動式區間月曆狀態與連選邏輯
+        const rangeCalYear = ref(2026);
+        const rangeCalMonth = ref(9); // 0-indexed (9 = 10月)
+
+        const shiftRangeCalMonth = (delta) => {
+          let m = rangeCalMonth.value + delta;
+          let y = rangeCalYear.value;
+          if (m < 0) { m = 11; y -= 1; }
+          else if (m > 11) { m = 0; y += 1; }
+          rangeCalMonth.value = m;
+          rangeCalYear.value = y;
+        };
+
+        const rangeCalendarCells = computed(() => {
+          const y = rangeCalYear.value;
+          const m = rangeCalMonth.value;
+          const firstDay = new Date(y, m, 1).getDay();
+          const daysInMonth = new Date(y, m + 1, 0).getDate();
+          const cells = [];
+          for (let i = 0; i < firstDay; i++) {
+            cells.push({ day: null, dateStr: '' });
+          }
+          for (let d = 1; d <= daysInMonth; d++) {
+            const mm = String(m + 1).padStart(2, '0');
+            const dd = String(d).padStart(2, '0');
+            cells.push({ day: d, dateStr: `${y}-${mm}-${dd}` });
+          }
+          return cells;
+        });
+
+        const clearRangeCalendarSelection = () => {
+          modalTripTitle.form.startDate = '';
+          modalTripTitle.form.endDate = '';
+        };
+
+        const onRangeCalendarDayClick = (dateStr) => {
+          const s = modalTripTitle.form.startDate;
+          const e = modalTripTitle.form.endDate;
+          // 尚未選起始日，或已經選好完整區間 -> 重新設定為新的起始日，等待點擊結束日
+          if (!s || (s && e)) {
+            modalTripTitle.form.startDate = dateStr;
+            modalTripTitle.form.endDate = '';
+            return;
+          }
+          // 已選起始日、尚未選結束日：若點選更早日期則自動交換起訖
+          if (dateStr < s) {
+            modalTripTitle.form.endDate = s;
+            modalTripTitle.form.startDate = dateStr;
+          } else {
+            modalTripTitle.form.endDate = dateStr;
+          }
+        };
+
+        const getRangeCellClass = (dateStr) => {
+          const s = modalTripTitle.form.startDate;
+          const e = modalTripTitle.form.endDate;
+          if (s && e && dateStr === s && dateStr === e) {
+            return 'bg-cq-cinnabar text-white font-bold rounded-full shadow-xs';
+          }
+          if (s && dateStr === s) {
+            return e
+              ? 'bg-cq-cinnabar text-white font-bold rounded-l-full rounded-r-md shadow-xs'
+              : 'bg-cq-cinnabar text-white font-bold rounded-full shadow-xs ring-2 ring-cq-cinnabar/30';
+          }
+          if (e && dateStr === e) {
+            return 'bg-cq-cinnabar text-white font-bold rounded-r-full rounded-l-md shadow-xs';
+          }
+          if (s && e && dateStr > s && dateStr < e) {
+            return 'bg-cq-cinnabarLight text-cq-cinnabar font-bold rounded-md w-full';
+          }
+          return 'text-cq-charcoal hover:bg-white rounded-full';
+        };
+
         // 日程預覽推算
         const computedSchedulePreview = computed(() => {
           const start = modalTripTitle.form.startDate;
           const end = modalTripTitle.form.endDate;
-          if (!start || !end) return '請先選擇起訖日期';
+          if (!start) return '請先在月曆上點選出發日期';
+          if (!end) return `${start.replace(/-/g, '.')} 出發（請繼續點選回程日期）`;
           const s = new Date(start);
           const e = new Date(end);
           const diffMs = e.getTime() - s.getTime();
@@ -5040,6 +5165,13 @@
           modalTripTitle.form.title = tripMeta.title || '旅遊手帳';
           modalTripTitle.form.startDate = tripMeta.startDate || '2026-10-27';
           modalTripTitle.form.endDate = tripMeta.endDate || '2026-11-03';
+          if (modalTripTitle.form.startDate && modalTripTitle.form.startDate.includes('-')) {
+            const [yy, mm] = modalTripTitle.form.startDate.split('-').map(Number);
+            if (!isNaN(yy) && !isNaN(mm)) {
+              rangeCalYear.value = yy;
+              rangeCalMonth.value = mm - 1;
+            }
+          }
           modalTripTitle.isOpen = true;
         };
 
@@ -6635,23 +6767,12 @@
         };
 
         const getMapNavUrl = (name = '', address = '') => {
-          const cityName = (currentCity.value && currentCity.value.name) ? currentCity.value.name : '';
           const cleanName = String(name || '').trim();
           const cleanAddr = String(address || '').trim();
-          const queryParts = [];
-          if (cityName && !cleanAddr.includes(cityName) && !cleanName.includes(cityName)) {
-            queryParts.push(cityName);
-          }
-          if (cleanAddr) {
-            queryParts.push(cleanAddr);
-          }
-          if (cleanName && (!cleanAddr || !cleanAddr.includes(cleanName))) {
-            queryParts.push(cleanName);
-          }
-          const finalQuery = queryParts.join(' ').trim() || cleanName || cleanAddr || cityName;
+          const finalQuery = cleanName || cleanAddr;
 
           if (resolvedMapEngine.value === 'amap') {
-            return `https://uri.amap.com/search?keyword=${encodeURIComponent(finalQuery)}&city=${encodeURIComponent(cityName)}&callnative=1`;
+            return `https://uri.amap.com/search?keyword=${encodeURIComponent(finalQuery)}&callnative=1`;
           }
           return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(finalQuery)}`;
         };
@@ -8315,6 +8436,13 @@
           installApp,
           tripMeta,
           modalTripTitle,
+          rangeCalYear,
+          rangeCalMonth,
+          shiftRangeCalMonth,
+          rangeCalendarCells,
+          clearRangeCalendarSelection,
+          onRangeCalendarDayClick,
+          getRangeCellClass,
           computedSchedulePreview,
           openEditTripTitleModal,
           submitSaveTripTitle,
