@@ -163,12 +163,12 @@
 
         <div @click="openEditTripTitleModal" class="cursor-pointer group min-w-0 flex-1 select-none">
           <h1 class="font-serif-cq font-bold text-base text-cq-charcoal flex items-center tracking-wide group-hover:text-cq-cinnabar transition truncate">
-            <span class="truncate">{{ tripMeta.title || '旅遊手帳' }}</span>
+            <span class="truncate">{{ tripMeta?.title || '旅遊手帳' }}</span>
             <span class="text-cq-cinnabar ml-1 text-xs flex-shrink-0">●</span>
             <i class="fa-regular fa-pen-to-square text-[10px] text-cq-muted ml-1.5 opacity-60 group-hover:opacity-100 transition flex-shrink-0"></i>
           </h1>
           <div class="flex items-center space-x-2 mt-0.5">
-            <span class="text-[10px] font-mono tracking-wider text-cq-muted truncate">{{ tripMeta.scheduleNote || '點擊設定日程' }}</span>
+            <span class="text-[10px] font-mono tracking-wider text-cq-muted truncate">{{ tripMeta?.scheduleNote || '點擊設定日程' }}</span>
           </div>
         </div>
       </div>
@@ -365,9 +365,10 @@
                   </button>
                   <a
                     :href="getMapNavUrl(item.name, item.address)"
+                    @click="openMapApp($event, item.name, item.address)"
                     target="_blank"
                     class="px-1.5 py-0.5 rounded-md bg-cq-mossLight hover:bg-cq-moss hover:text-white text-cq-moss border border-cq-moss/30 text-[10px] font-bold inline-flex items-center space-x-1 transition active:scale-95 whitespace-nowrap"
-                    title="開啟地圖導航"
+                    title="直接開啟地圖 App 導航"
                   >
                     <i class="fa-solid fa-diamond-turn-right text-[9px]"></i>
                     <span>導航</span>
@@ -404,9 +405,20 @@
               </div>
             </div>
 
-            <!-- 照片展示 -->
-            <div v-if="item.image" class="mt-2.5 rounded-xl overflow-hidden border border-cq-border max-h-48 w-full">
-              <img :src="item.image" :alt="item.name" class="w-full h-full object-cover">
+            <!-- 照片展示 (支援多張縮圖橫向排列，點擊放大) -->
+            <div v-if="(item.images && item.images.length > 0) || item.image" class="mt-2.5 flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5">
+              <div 
+                v-for="(imgSrc, imgIdx) in (item.images && item.images.length > 0 ? item.images : [item.image])"
+                :key="imgIdx"
+                @click="openLightbox((item.images && item.images.length > 0 ? item.images : [item.image]), imgIdx)"
+                class="w-20 h-20 rounded-xl overflow-hidden border border-cq-border flex-shrink-0 cursor-pointer relative group shadow-2xs"
+                title="點擊放大查看照片"
+              >
+                <img :src="imgSrc" :alt="item.name" class="w-full h-full object-cover group-hover:scale-105 transition duration-200">
+                <span class="absolute bottom-1 right-1 w-4 h-4 rounded-full bg-black/55 text-white flex items-center justify-center text-[8px]">
+                  <i class="fa-solid fa-magnifying-glass-plus"></i>
+                </span>
+              </div>
             </div>
 
             <!-- 地址與複製 (取消外框與灰底，極簡文字排版) -->
@@ -934,44 +946,67 @@
             </div>
 
             <div class="space-y-1.5 text-xs">
-              <div class="flex items-center flex-wrap gap-1.5">
-                <h4 class="font-bold text-cq-charcoal text-sm">{{ stay.hotelName }}</h4>
-                <button
-                  type="button"
-                  @click="copyText(stay.hotelName)"
-                  class="px-1.5 py-0.5 rounded-md bg-cq-wash hover:bg-cq-charcoal hover:text-white text-cq-muted border border-cq-border text-[10px] font-medium inline-flex items-center space-x-1 transition active:scale-95 whitespace-nowrap"
-                  title="複製飯店/民宿名稱"
-                >
-                  <i class="fa-regular fa-copy text-[9px]"></i>
-                  <span>複製名稱</span>
-                </button>
-              </div>
-              
-              <!-- 地址列 + 內嵌精巧複製按鈕 -->
-              <div v-if="stay.address" class="flex items-start justify-between gap-2 text-cq-muted leading-snug">
-                <div class="flex items-start space-x-1.5 min-w-0 flex-1">
-                  <i class="fa-solid fa-location-dot mt-0.5 text-cq-cinnabar flex-shrink-0"></i>
-                  <span class="break-all text-[11px] select-all">{{ stay.address }}</span>
+              <div class="flex items-start justify-between gap-2.5">
+                <div class="min-w-0 flex-1 space-y-1.5">
+                  <div class="flex items-center flex-wrap gap-1.5">
+                    <h4 class="font-bold text-cq-charcoal text-sm">{{ stay.hotelName }}</h4>
+                    <button
+                      type="button"
+                      @click="copyText(stay.hotelName)"
+                      class="px-1.5 py-0.5 rounded-md bg-cq-wash hover:bg-cq-charcoal hover:text-white text-cq-muted border border-cq-border text-[10px] font-medium inline-flex items-center space-x-1 transition active:scale-95 whitespace-nowrap"
+                      title="複製飯店/民宿名稱"
+                    >
+                      <i class="fa-regular fa-copy text-[9px]"></i>
+                      <span>複製名稱</span>
+                    </button>
+                  </div>
+                  
+                  <!-- 地址列 + 內嵌精巧複製按鈕 -->
+                  <div v-if="stay.address" class="flex items-start justify-between gap-2 text-cq-muted leading-snug">
+                    <div class="flex items-start space-x-1.5 min-w-0 flex-1">
+                      <i class="fa-solid fa-location-dot mt-0.5 text-cq-cinnabar flex-shrink-0"></i>
+                      <span class="break-all text-[11px] select-all">{{ stay.address }}</span>
+                    </div>
+                    <button 
+                      type="button"
+                      @click="copyText(stay.address)" 
+                      class="flex-shrink-0 text-cq-muted hover:text-cq-cinnabar text-[11px] inline-flex items-center space-x-1 transition active:scale-95 py-0.5 px-1.5 rounded-md bg-cq-wash border border-cq-border/70 whitespace-nowrap"
+                      title="複製住宿地址"
+                    >
+                      <i class="fa-regular fa-copy text-[10px]"></i>
+                      <span>複製</span>
+                    </button>
+                  </div>
+
+                  <div v-if="stay.phone" class="flex items-center space-x-1.5 text-cq-muted text-[11px]">
+                    <i class="fa-solid fa-phone text-cq-moss flex-shrink-0"></i>
+                    <span>電話：{{ stay.phone }}</span>
+                  </div>
+
+                  <div v-if="stay.roomType" class="flex items-start space-x-1.5 text-cq-muted leading-snug text-[11px]">
+                    <i class="fa-solid fa-bed mt-0.5 text-cq-gold flex-shrink-0"></i>
+                    <span>房型：{{ stay.roomType }}</span>
+                  </div>
                 </div>
-                <button 
-                  type="button"
-                  @click="copyText(stay.address)" 
-                  class="flex-shrink-0 text-cq-muted hover:text-cq-cinnabar text-[11px] inline-flex items-center space-x-1 transition active:scale-95 py-0.5 px-1.5 rounded-md bg-cq-wash border border-cq-border/70 whitespace-nowrap"
-                  title="複製住宿地址"
+
+                <!-- 精巧方形縮圖列 (支援多張並排，點擊放大預覽) -->
+                <div 
+                  v-if="(stay.images && stay.images.length > 0) || stay.image" 
+                  class="flex items-center gap-1.5 flex-shrink-0 max-w-[140px] overflow-x-auto no-scrollbar"
                 >
-                  <i class="fa-regular fa-copy text-[10px]"></i>
-                  <span>複製</span>
-                </button>
-              </div>
-
-              <div v-if="stay.phone" class="flex items-center space-x-1.5 text-cq-muted text-[11px]">
-                <i class="fa-solid fa-phone text-cq-moss flex-shrink-0"></i>
-                <span>電話：{{ stay.phone }}</span>
-              </div>
-
-              <div v-if="stay.roomType" class="flex items-start space-x-1.5 text-cq-muted leading-snug text-[11px]">
-                <i class="fa-solid fa-bed mt-0.5 text-cq-gold flex-shrink-0"></i>
-                <span>房型：{{ stay.roomType }}</span>
+                  <div
+                    v-for="(imgSrc, imgIdx) in (stay.images && stay.images.length > 0 ? stay.images : [stay.image])"
+                    :key="imgIdx"
+                    @click="openLightbox((stay.images && stay.images.length > 0 ? stay.images : [stay.image]), imgIdx)"
+                    class="w-16 h-16 rounded-xl overflow-hidden border border-cq-border flex-shrink-0 cursor-pointer relative group shadow-2xs"
+                    title="點擊放大查看住宿照片"
+                  >
+                    <img :src="imgSrc" :alt="stay.hotelName" class="w-full h-full object-cover group-hover:scale-105 transition duration-200">
+                    <span class="absolute bottom-1 right-1 w-4 h-4 rounded-full bg-black/55 text-white flex items-center justify-center text-[8px]">
+                      <i class="fa-solid fa-magnifying-glass-plus"></i>
+                    </span>
+                  </div>
+                </div>
               </div>
 
               <!-- 重要門禁密碼卡 (紅色醒目卡片) -->
@@ -1029,6 +1064,7 @@
               </button>
               <a 
                 :href="getMapNavUrl(stay.hotelName, stay.address)" 
+                @click="openMapApp($event, stay.hotelName, stay.address)"
                 target="_blank" 
                 class="px-2.5 py-1 bg-cq-mossLight text-cq-moss border border-cq-moss/30 hover:bg-cq-moss hover:text-white rounded-lg text-[11px] font-serif-cq font-bold transition inline-flex items-center space-x-1 active:scale-95 whitespace-nowrap"
               >
@@ -1602,9 +1638,20 @@
             :class="food.isChecked ? 'opacity-70 bg-cq-wash/30' : ''"
           >
             <div class="flex">
-              <!-- 照片 -->
-              <div v-if="food.image" class="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0 mr-3 border border-cq-border">
-                <img :src="food.image" :alt="food.name" class="w-full h-full object-cover">
+              <!-- 照片縮圖列 (支援多張並排，點擊放大) -->
+              <div v-if="(food.images && food.images.length > 0) || food.image" class="flex items-center gap-1.5 flex-shrink-0 mr-3 max-w-[136px] overflow-x-auto no-scrollbar">
+                <div 
+                  v-for="(imgSrc, imgIdx) in (food.images && food.images.length > 0 ? food.images : [food.image])"
+                  :key="imgIdx"
+                  @click="openLightbox((food.images && food.images.length > 0 ? food.images : [food.image]), imgIdx)"
+                  class="w-16 h-16 rounded-xl overflow-hidden flex-shrink-0 border border-cq-border cursor-pointer relative group"
+                  title="點擊放大查看美食照片"
+                >
+                  <img :src="imgSrc" :alt="food.name" class="w-full h-full object-cover group-hover:scale-105 transition duration-200">
+                  <span class="absolute bottom-1 right-1 w-4 h-4 rounded-full bg-black/55 text-white flex items-center justify-center text-[8px]">
+                    <i class="fa-solid fa-magnifying-glass-plus"></i>
+                  </span>
+                </div>
               </div>
 
               <div class="flex-1 min-w-0 flex flex-col justify-between">
@@ -1628,9 +1675,10 @@
                       </button>
                       <a
                         :href="getMapNavUrl(food.name, food.address)"
+                        @click="openMapApp($event, food.name, food.address)"
                         target="_blank"
                         class="px-1.5 py-0.5 rounded-md bg-cq-mossLight hover:bg-cq-moss hover:text-white text-cq-moss border border-cq-moss/30 text-[10px] font-bold inline-flex items-center space-x-1 transition active:scale-95 whitespace-nowrap"
-                        title="開啟地圖導航"
+                        title="直接開啟地圖 App 導航"
                       >
                         <i class="fa-solid fa-diamond-turn-right text-[9px]"></i>
                         <span>導航</span>
@@ -1813,9 +1861,10 @@
                       </button>
                       <a
                         :href="getMapNavUrl(item.name, '')"
+                        @click="openMapApp($event, item.name, '')"
                         target="_blank"
                         class="px-1.5 py-0.5 rounded-md bg-cq-mossLight hover:bg-cq-moss hover:text-white text-cq-moss border border-cq-moss/30 text-[10px] font-bold inline-flex items-center space-x-1 transition active:scale-95 whitespace-nowrap"
-                        title="搜尋附近分店與導航"
+                        title="直接開啟地圖 App 搜尋附近分店"
                       >
                         <i class="fa-solid fa-diamond-turn-right text-[9px]"></i>
                         <span>導航</span>
@@ -1923,9 +1972,10 @@
                     </button>
                     <a
                       :href="getMapNavUrl(spot.name, '')"
+                      @click="openMapApp($event, spot.name, '')"
                       target="_blank"
                       class="px-1.5 py-0.5 rounded-md bg-cq-mossLight hover:bg-cq-moss hover:text-white text-cq-moss border border-cq-moss/30 text-[10px] font-bold inline-flex items-center space-x-1 transition active:scale-95 whitespace-nowrap"
-                      title="開啟地圖導航"
+                      title="直接開啟地圖 App 導航"
                     >
                       <i class="fa-solid fa-diamond-turn-right text-[9px]"></i>
                       <span>導航</span>
@@ -2461,7 +2511,7 @@
                 v-if="cell.dateStr"
                 type="button"
                 @click="onRangeCalendarDayClick(cell.dateStr)"
-                class="w-8 h-8 text-xs font-medium transition flex items-center justify-center relative"
+                class="w-8 h-8 flex items-center justify-center transition text-xs"
                 :class="getRangeCellClass(cell.dateStr)"
               >
                 {{ cell.day }}
@@ -2508,6 +2558,59 @@
           <button type="button" @click="modalTripTitle.isOpen = false" class="flex-1 py-2.5 rounded-xl border border-cq-border text-cq-muted font-medium hover:bg-cq-wash">取消</button>
           <button type="button" @click="submitSaveTripTitle" class="flex-1 py-2.5 rounded-xl bg-cq-charcoal hover:bg-black text-white font-medium active:scale-95 transition">儲存修改</button>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 照片燈箱 (全螢幕高清放大預覽，支援左右切換上一張/下一張、手機左右滑動) -->
+  <div 
+    v-if="lightbox.isOpen" 
+    @click="lightbox.isOpen = false" 
+    @touchstart="onLightboxTouchStart"
+    @touchend="onLightboxTouchEnd"
+    class="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4 cursor-pointer select-none"
+  >
+    <div class="relative max-w-lg max-h-[85vh] w-full flex items-center justify-center" @click.stop>
+      <img :src="lightbox.images[lightbox.currentIndex] || lightbox.imageUrl" class="max-w-full max-h-[82vh] object-contain rounded-2xl shadow-2xl">
+      
+      <!-- 關閉按鈕 -->
+      <button 
+        type="button" 
+        @click.stop="lightbox.isOpen = false" 
+        class="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-cq-charcoal text-white flex items-center justify-center text-sm shadow-md hover:bg-black transition"
+        title="關閉預覽"
+      >
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+
+      <!-- 上一張按鈕 -->
+      <button
+        v-if="lightbox.images.length > 1"
+        type="button"
+        @click.stop="prevLightboxPhoto"
+        class="absolute left-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/60 hover:bg-black/85 text-white flex items-center justify-center text-sm shadow-lg transition active:scale-90"
+        title="上一張"
+      >
+        <i class="fa-solid fa-chevron-left"></i>
+      </button>
+
+      <!-- 下一張按鈕 -->
+      <button
+        v-if="lightbox.images.length > 1"
+        type="button"
+        @click.stop="nextLightboxPhoto"
+        class="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/60 hover:bg-black/85 text-white flex items-center justify-center text-sm shadow-lg transition active:scale-90"
+        title="下一張"
+      >
+        <i class="fa-solid fa-chevron-right"></i>
+      </button>
+
+      <!-- 張數指示膠囊 -->
+      <div
+        v-if="lightbox.images.length > 1"
+        class="absolute -bottom-8 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-black/65 text-white text-xs font-mono tracking-wider"
+      >
+        {{ lightbox.currentIndex + 1 }} / {{ lightbox.images.length }}
       </div>
     </div>
   </div>
@@ -2772,11 +2875,33 @@
             @click="itemForm._expanded = !itemForm._expanded" 
             class="w-full py-1.5 px-2.5 rounded-xl bg-white border border-cq-border/80 text-[11px] text-cq-muted hover:text-cq-charcoal flex items-center justify-between transition"
           >
-            <span>{{ itemForm._expanded ? '收合進階細節' : '展開選填細節 (地址 / 門禁密碼 / 電話 / 網址 / 提醒)' }}</span>
+            <span>{{ itemForm._expanded ? '收合進階細節' : '展開選填細節 (照片 / 地址 / 門禁密碼 / 電話 / 網址 / 提醒)' }}</span>
             <i class="fa-solid text-[10px]" :class="itemForm._expanded ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
           </button>
 
           <div v-show="itemForm._expanded" class="space-y-2 pt-1 border-t border-cq-border/50">
+            <!-- 住宿照片上傳區 (支援多張照片) -->
+            <div>
+              <label class="block text-cq-muted mb-1 font-medium">飯店 / 房間照片 (可一次選取或追加多張)</label>
+              <div v-if="itemForm.images && itemForm.images.length > 0" class="flex flex-wrap gap-2 mb-2">
+                <div v-for="(imgSrc, imgIdx) in itemForm.images" :key="imgIdx" class="w-14 h-14 rounded-xl border border-cq-border overflow-hidden relative flex-shrink-0">
+                  <img :src="imgSrc" class="w-full h-full object-cover">
+                  <button 
+                    type="button"
+                    @click="removeFormPhoto(itemForm, imgIdx)" 
+                    class="absolute top-0 right-0 bg-black/65 text-white w-4 h-4 rounded-bl flex items-center justify-center text-[9px]"
+                  >
+                    <i class="fa-solid fa-xmark"></i>
+                  </button>
+                </div>
+              </div>
+              <label class="w-full py-2 px-3 border border-dashed border-cq-border rounded-xl text-center cursor-pointer hover:bg-white transition flex items-center justify-center space-x-1.5 text-cq-muted bg-white/60">
+                <i class="fa-solid fa-images text-xs text-cq-charcoal"></i>
+                <span class="text-[11px] font-medium">{{ (itemForm.images && itemForm.images.length > 0) ? '繼續新增更多住宿照片 (目前 ' + itemForm.images.length + ' 張)' : '選取住宿照片 (可多選)' }}</span>
+                <input type="file" accept="image/*" multiple @change="onStayPhotoUpload($event, idx)" class="hidden">
+              </label>
+            </div>
+
             <div>
               <label class="block text-cq-muted mb-1 font-medium">詳細街道地址 (供一鍵複製)</label>
               <input type="text" v-model="itemForm.address" class="w-full px-3 py-1.5 rounded-xl border border-cq-border bg-white text-cq-charcoal">
@@ -2838,10 +2963,68 @@
         </button>
       </div>
 
-      <div class="flex space-x-2 pt-2 border-t border-cq-border/60">
-        <button type="button" @click="modalStay.isOpen = false" class="flex-1 py-2 rounded-xl border border-cq-border text-cq-muted font-medium">取消</button>
-        <button type="button" @click="submitSaveStay" class="flex-1 py-2 rounded-xl bg-cq-charcoal text-white font-medium">
+      <div class="flex space-x-2 pt-2 pb-2 sm:pb-0 border-t border-cq-border/60 flex-shrink-0">
+        <button type="button" @click="modalStay.isOpen = false" class="flex-1 py-2.5 rounded-xl border border-cq-border text-cq-muted font-medium">取消</button>
+        <button type="button" @click="submitSaveStay" class="flex-1 py-2.5 rounded-xl bg-cq-charcoal text-white font-medium hover:bg-black active:scale-95 transition">
           {{ modalStay.isEdit ? '儲存住宿' : '全部儲存 (' + modalStay.forms.length + '間)' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 照片燈箱 (全螢幕高清放大預覽，支援左右切換上一張/下一張、點擊照片直接下一張、手機左右滑動) -->
+  <div 
+    v-if="lightbox.isOpen" 
+    @click="lightbox.isOpen = false" 
+    @touchstart="onLightboxTouchStart"
+    @touchend="onLightboxTouchEnd"
+    class="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm flex flex-col items-center justify-center p-4 cursor-pointer select-none"
+  >
+    <div class="relative max-w-lg max-h-[82vh] w-full flex flex-col items-center justify-center" @click.stop>
+      <!-- 右上角關閉按鈕 -->
+      <button 
+        type="button" 
+        @click.stop="lightbox.isOpen = false" 
+        class="self-end mb-2 w-9 h-9 rounded-full bg-white/20 hover:bg-white/30 text-white flex items-center justify-center text-base shadow-md transition active:scale-95"
+        title="關閉預覽"
+      >
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+
+      <!-- 圖片主體：多張時直接點擊照片本身也能切換下一張 -->
+      <div class="relative w-full flex items-center justify-center">
+        <img 
+          :src="lightbox.images[lightbox.currentIndex] || lightbox.imageUrl" 
+          @click.stop="lightbox.images.length > 1 ? nextLightboxPhoto() : (lightbox.isOpen = false)"
+          class="max-w-full max-h-[68vh] object-contain rounded-2xl shadow-2xl transition-all duration-200"
+        >
+      </div>
+
+      <!-- 手機版超好按的底部大尺寸上一張 / 張數 / 下一張控制列 -->
+      <div
+        v-if="lightbox.images.length > 1"
+        class="mt-4 flex items-center justify-center space-x-5 bg-white/15 backdrop-blur-md px-4 py-2 rounded-full border border-white/20 shadow-lg"
+      >
+        <button
+          type="button"
+          @click.stop="prevLightboxPhoto"
+          class="w-10 h-10 rounded-full bg-white text-cq-charcoal hover:bg-cq-wash flex items-center justify-center text-sm font-bold shadow-md transition active:scale-90"
+          title="上一張"
+        >
+          <i class="fa-solid fa-chevron-left"></i>
+        </button>
+
+        <span class="text-white text-xs font-mono font-bold tracking-widest min-w-[56px] text-center">
+          {{ lightbox.currentIndex + 1 }} / {{ lightbox.images.length }}
+        </span>
+
+        <button
+          type="button"
+          @click.stop="nextLightboxPhoto"
+          class="w-10 h-10 rounded-full bg-white text-cq-charcoal hover:bg-cq-wash flex items-center justify-center text-sm font-bold shadow-md transition active:scale-90"
+          title="下一張"
+        >
+          <i class="fa-solid fa-chevron-right"></i>
         </button>
       </div>
     </div>
@@ -4126,26 +4309,26 @@
             </div>
 
             <!-- 照片上傳區 -->
+            <!-- 照片上傳區 (支援多張照片) -->
             <div>
-              <label class="block text-cq-muted mb-1 font-medium">景點或活動照片 (自動輕量壓縮)</label>
-              <div class="flex items-center space-x-2.5">
-                <div v-if="itemForm.image" class="w-12 h-12 rounded-xl border border-cq-border overflow-hidden relative flex-shrink-0">
-                  <img :src="itemForm.image" class="w-full h-full object-cover">
+              <label class="block text-cq-muted mb-1 font-medium">景點或活動照片 (可一次選取或追加多張)</label>
+              <div v-if="itemForm.images && itemForm.images.length > 0" class="flex flex-wrap gap-2 mb-2">
+                <div v-for="(imgSrc, imgIdx) in itemForm.images" :key="imgIdx" class="w-14 h-14 rounded-xl border border-cq-border overflow-hidden relative flex-shrink-0">
+                  <img :src="imgSrc" class="w-full h-full object-cover">
                   <button 
                     type="button"
-                    @click="itemForm.image = ''" 
-                    class="absolute top-0 right-0 bg-black/60 text-white w-4 h-4 rounded-bl flex items-center justify-center text-[9px]"
+                    @click="removeFormPhoto(itemForm, imgIdx)" 
+                    class="absolute top-0 right-0 bg-black/65 text-white w-4 h-4 rounded-bl flex items-center justify-center text-[9px]"
                   >
                     <i class="fa-solid fa-xmark"></i>
                   </button>
                 </div>
-                
-                <label class="flex-1 py-2 px-3 border border-dashed border-cq-border rounded-xl text-center cursor-pointer hover:bg-white transition flex items-center justify-center space-x-1.5 text-cq-muted bg-white/60">
-                  <i class="fa-solid fa-camera text-xs text-cq-charcoal"></i>
-                  <span class="text-[11px] font-medium">{{ itemForm.image ? '更換照片' : '選取相簿照片' }}</span>
-                  <input type="file" accept="image/*" @change="onEventPhotoUpload($event, idx)" class="hidden">
-                </label>
               </div>
+              <label class="w-full py-2 px-3 border border-dashed border-cq-border rounded-xl text-center cursor-pointer hover:bg-white transition flex items-center justify-center space-x-1.5 text-cq-muted bg-white/60">
+                <i class="fa-solid fa-images text-xs text-cq-charcoal"></i>
+                <span class="text-[11px] font-medium">{{ (itemForm.images && itemForm.images.length > 0) ? '繼續新增更多照片 (目前 ' + itemForm.images.length + ' 張)' : '選取相簿照片 (可多選)' }}</span>
+                <input type="file" accept="image/*" multiple @change="onEventPhotoUpload($event, idx)" class="hidden">
+              </label>
             </div>
 
             <!-- 醒目提醒設定區 -->
@@ -4246,7 +4429,7 @@
           <!-- 摺疊展開按鈕 -->
           <button 
             type="button" 
-            @click="itemForm._expanded = !itemForm._expanded"
+            @click="itemForm._expanded = !itemForm._expanded" 
             class="w-full py-1.5 px-2.5 rounded-xl bg-white hover:bg-cq-wash border border-cq-border text-[11px] text-cq-muted hover:text-cq-charcoal font-medium flex items-center justify-between transition"
           >
             <span class="flex items-center space-x-1.5">
@@ -4272,20 +4455,20 @@
               </div>
             </div>
             <div>
-              <label class="block text-cq-muted mb-1 font-medium">美食照片 (自動壓縮)</label>
-              <div class="flex items-center space-x-2.5">
-                <div v-if="itemForm.image" class="w-12 h-12 rounded-xl border border-cq-border overflow-hidden relative flex-shrink-0">
-                  <img :src="itemForm.image" class="w-full h-full object-cover">
-                  <button type="button" @click="itemForm.image = ''" class="absolute top-0 right-0 bg-black/60 text-white w-4 h-4 rounded-bl flex items-center justify-center text-[9px]">
+              <label class="block text-cq-muted mb-1 font-medium">美食照片 (可一次選取或追加多張)</label>
+              <div v-if="itemForm.images && itemForm.images.length > 0" class="flex flex-wrap gap-2 mb-2">
+                <div v-for="(imgSrc, imgIdx) in itemForm.images" :key="imgIdx" class="w-14 h-14 rounded-xl border border-cq-border overflow-hidden relative flex-shrink-0">
+                  <img :src="imgSrc" class="w-full h-full object-cover">
+                  <button type="button" @click="removeFormPhoto(itemForm, imgIdx)" class="absolute top-0 right-0 bg-black/65 text-white w-4 h-4 rounded-bl flex items-center justify-center text-[9px]">
                     <i class="fa-solid fa-xmark"></i>
                   </button>
                 </div>
-                <label class="flex-1 py-2 px-3 border border-dashed border-cq-border rounded-xl text-center cursor-pointer hover:bg-white transition flex items-center justify-center space-x-1.5 text-cq-muted bg-white/60">
-                  <i class="fa-solid fa-camera text-xs text-cq-charcoal"></i>
-                  <span class="text-[11px] font-medium">{{ itemForm.image ? '更換照片' : '選取餐廳照片' }}</span>
-                  <input type="file" accept="image/*" @change="onFoodPhotoUpload($event, idx)" class="hidden">
-                </label>
               </div>
+              <label class="w-full py-2 px-3 border border-dashed border-cq-border rounded-xl text-center cursor-pointer hover:bg-white transition flex items-center justify-center space-x-1.5 text-cq-muted bg-white/60">
+                <i class="fa-solid fa-images text-xs text-cq-charcoal"></i>
+                <span class="text-[11px] font-medium">{{ (itemForm.images && itemForm.images.length > 0) ? '繼續新增更多美食照片 (目前 ' + itemForm.images.length + ' 張)' : '選取餐廳照片 (可多選)' }}</span>
+                <input type="file" accept="image/*" multiple @change="onFoodPhotoUpload($event, idx)" class="hidden">
+              </label>
             </div>
             <div>
               <label class="block text-cq-muted mb-1 font-medium">點餐/排隊筆記 (支援換行)</label>
@@ -4752,24 +4935,6 @@
           </button>
         </div>
       </div>
-    </div>
-  </div>
-
-  <!-- 照片燈箱 (全螢幕高清放大預覽) -->
-  <div 
-    v-if="lightbox.isOpen" 
-    @click="lightbox.isOpen = false" 
-    class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 cursor-pointer"
-  >
-    <div class="relative max-w-lg max-h-[85vh] w-full flex items-center justify-center">
-      <img :src="lightbox.imageUrl" class="max-w-full max-h-[85vh] object-contain rounded-2xl shadow-2xl">
-      <button 
-        type="button" 
-        @click.stop="lightbox.isOpen = false" 
-        class="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-cq-charcoal text-white flex items-center justify-center text-sm shadow-md"
-      >
-        <i class="fa-solid fa-xmark"></i>
-      </button>
     </div>
   </div>
 
@@ -5968,11 +6133,55 @@
           showToast('已刪除記帳紀錄');
         };
 
-        const lightbox = reactive({ isOpen: false, imageUrl: '' });
-        const openLightbox = (url) => {
-          lightbox.imageUrl = url;
+        const lightbox = reactive({ isOpen: false, imageUrl: '', images: [], currentIndex: 0 });
+        let lightboxTouchStartX = 0;
+
+        const openLightbox = (imagesOrUrl, startIndex = 0) => {
+          if (Array.isArray(imagesOrUrl)) {
+            lightbox.images = imagesOrUrl.filter(Boolean);
+            lightbox.currentIndex = Math.min(Math.max(0, startIndex), Math.max(0, lightbox.images.length - 1));
+            lightbox.imageUrl = lightbox.images[lightbox.currentIndex] || '';
+          } else {
+            lightbox.images = imagesOrUrl ? [imagesOrUrl] : [];
+            lightbox.currentIndex = 0;
+            lightbox.imageUrl = imagesOrUrl || '';
+          }
           lightbox.isOpen = true;
         };
+
+        const prevLightboxPhoto = () => {
+          if (lightbox.images.length <= 1) return;
+          lightbox.currentIndex = (lightbox.currentIndex - 1 + lightbox.images.length) % lightbox.images.length;
+          lightbox.imageUrl = lightbox.images[lightbox.currentIndex];
+        };
+
+        const nextLightboxPhoto = () => {
+          if (lightbox.images.length <= 1) return;
+          lightbox.currentIndex = (lightbox.currentIndex + 1) % lightbox.images.length;
+          lightbox.imageUrl = lightbox.images[lightbox.currentIndex];
+        };
+
+        const onLightboxTouchStart = (e) => {
+          if (e.touches && e.touches.length > 0) {
+            lightboxTouchStartX = e.touches[0].clientX;
+          }
+        };
+
+        const onLightboxTouchEnd = (e) => {
+          if (!e.changedTouches || e.changedTouches.length === 0) return;
+          const diffX = e.changedTouches[0].clientX - lightboxTouchStartX;
+          if (Math.abs(diffX) > 40) {
+            if (diffX < 0) nextLightboxPhoto();
+            else prevLightboxPhoto();
+          }
+        };
+
+        window.addEventListener('keydown', (e) => {
+          if (!lightbox.isOpen) return;
+          if (e.key === 'ArrowLeft') prevLightboxPhoto();
+          else if (e.key === 'ArrowRight') nextLightboxPhoto();
+          else if (e.key === 'Escape') lightbox.isOpen = false;
+        });
 
         // ==================== 5. 機酒保險 (離線快速查閱) ====================
         const stayList = ref([]);
@@ -5993,6 +6202,8 @@
           address: '',
           phone: '',
           linkUrl: '',
+          image: '',
+          images: [],
           accessCode: '',
           roomType: '',
           notes: '',
@@ -6000,6 +6211,13 @@
           alertText: '',
           alertType: 'warning'
         });
+
+        const removeFormPhoto = (itemForm, imgIdx) => {
+          if (Array.isArray(itemForm.images)) {
+            itemForm.images.splice(imgIdx, 1);
+            itemForm.image = itemForm.images[0] || '';
+          }
+        };
 
         const openAddStayModal = () => {
           modalStay.isEdit = false;
@@ -6019,8 +6237,38 @@
 
         const openEditStayModal = (stay) => {
           modalStay.isEdit = true;
-          modalStay.forms = [{ _key: stay.id, _expanded: true, linkUrl: '', ...stay }];
+          const existingImgs = Array.isArray(stay.images) && stay.images.length > 0
+            ? [...stay.images]
+            : (stay.image ? [stay.image] : []);
+          modalStay.forms = [{
+            _key: stay.id,
+            _expanded: true,
+            linkUrl: '',
+            ...stay,
+            images: existingImgs,
+            image: existingImgs[0] || ''
+          }];
           modalStay.isOpen = true;
+        };
+
+        const onStayPhotoUpload = async (event, idx = 0) => {
+          const files = event.target.files ? Array.from(event.target.files) : [];
+          if (files.length === 0) return;
+          try {
+            showToast(`正在壓縮 ${files.length} 張住宿照片...`);
+            const form = modalStay.forms[idx];
+            if (!form) return;
+            if (!Array.isArray(form.images)) form.images = form.image ? [form.image] : [];
+            for (const file of files) {
+              const compressed = await compressImage(file, 960, 0.78);
+              form.images.push(compressed);
+            }
+            form.image = form.images[0] || '';
+            showToast(`已載入共 ${form.images.length} 張住宿照片`);
+          } catch (e) {
+            showToast('照片處理失敗');
+          }
+          event.target.value = '';
         };
 
         const submitSaveStay = () => {
@@ -6034,13 +6282,18 @@
             const idx = stayList.value.findIndex(s => s.id === f.id);
             if (idx !== -1) {
               const { _key, _expanded, ...cleanStay } = f;
+              cleanStay.images = Array.isArray(f.images) ? [...f.images] : (f.image ? [f.image] : []);
+              cleanStay.image = cleanStay.images[0] || '';
               stayList.value[idx] = cleanStay;
             }
           } else {
             const newStays = validForms.map((f, i) => {
               const { _key, _expanded, ...cleanStay } = f;
+              const imgs = Array.isArray(f.images) ? [...f.images] : (f.image ? [f.image] : []);
               return {
                 ...cleanStay,
+                images: imgs,
+                image: imgs[0] || '',
                 hotelName: f.hotelName.trim(),
                 id: 'stay-' + Date.now() + '-' + i
               };
@@ -6051,6 +6304,7 @@
           modalStay.isOpen = false;
           showToast(modalStay.isEdit ? '住宿資訊已更新' : `已成功新增 ${validForms.length} 間住宿資訊！`);
         };
+
         // 行程站點 Modal (支援多筆同時新增)
         const modalEvent = reactive({
           isOpen: false,
@@ -6069,6 +6323,7 @@
           duration: '1～2小時',
           costCny: null,
           image: '',
+          images: [],
           alertTitle: '',
           alertText: '',
           alertType: 'warning',
@@ -6093,6 +6348,9 @@
 
         const openEditEventModal = (item) => {
           modalEvent.isEdit = true;
+          const existingImgs = Array.isArray(item.images) && item.images.length > 0
+            ? [...item.images]
+            : (item.image ? [item.image] : []);
           modalEvent.forms = [{
             _key: item.id,
             _expanded: true,
@@ -6103,7 +6361,8 @@
             category: item.category || '景點',
             duration: item.duration || '',
             costCny: item.costCny || null,
-            image: item.image || '',
+            image: existingImgs[0] || '',
+            images: existingImgs,
             alertTitle: item.alertTitle || '',
             alertText: item.alertText || '',
             alertType: item.alertType || 'warning',
@@ -6113,15 +6372,19 @@
         };
 
         const onEventPhotoUpload = async (event, idx = 0) => {
-          const file = event.target.files && event.target.files[0];
-          if (!file) return;
+          const files = event.target.files ? Array.from(event.target.files) : [];
+          if (files.length === 0) return;
           try {
-            showToast('正在壓縮照片中...');
-            const compressedBase64 = await compressImage(file, 600, 0.65);
-            if (modalEvent.forms[idx]) {
-              modalEvent.forms[idx].image = compressedBase64;
+            showToast(`正在壓縮 ${files.length} 張照片...`);
+            const form = modalEvent.forms[idx];
+            if (!form) return;
+            if (!Array.isArray(form.images)) form.images = form.image ? [form.image] : [];
+            for (const file of files) {
+              const compressedBase64 = await compressImage(file, 960, 0.78);
+              form.images.push(compressedBase64);
             }
-            showToast('照片已就緒');
+            form.image = form.images[0] || '';
+            showToast(`已載入共 ${form.images.length} 張照片`);
           } catch (e) {
             showToast('照片處理失敗，請重試');
           }
@@ -6141,13 +6404,18 @@
             const idx = currentDay.value.events.findIndex(e => e.id === f.id);
             if (idx !== -1) {
               const { _key, _expanded, ...cleanEv } = f;
+              cleanEv.images = Array.isArray(f.images) ? [...f.images] : (f.image ? [f.image] : []);
+              cleanEv.image = cleanEv.images[0] || '';
               currentDay.value.events[idx] = cleanEv;
             }
           } else {
             const newEvents = validForms.map((f, i) => {
               const { _key, _expanded, ...cleanEv } = f;
+              const imgs = Array.isArray(f.images) ? [...f.images] : (f.image ? [f.image] : []);
               return {
                 ...cleanEv,
+                images: imgs,
+                image: imgs[0] || '',
                 id: 'ev-' + Date.now() + '-' + i,
                 name: f.name.trim()
               };
@@ -6303,7 +6571,6 @@
           { value: 'C航廈', label: 'C 航廈' }
         ];
 
-        // 拆解舊有字串 (例如 "台北桃園 T2" -> { name: "台北桃園", terminal: "T2" })
         const splitAirportAndTerminal = (fullStr) => {
           const raw = (fullStr || '').trim();
           if (!raw) return { name: '', terminal: '' };
@@ -6317,14 +6584,12 @@
           return { name: raw, terminal: '' };
         };
 
-        // 組合機場簡稱與航廈顯示字串
         const syncAirportDisplay = (prefix) => {
           const name = (modalFlight.form[prefix + 'Name'] || '').trim();
           const terminal = (modalFlight.form[prefix + 'Terminal'] || '').trim();
           modalFlight.form[prefix + 'Airport'] = [name, terminal].filter(Boolean).join(' ');
         };
 
-        // 選擇機場代號下拉選單時自動帶入機場簡稱或切換為自訂輸入框
         const onAirportCodeSelect = (prefix) => {
           const code = modalFlight.form[prefix + 'Code'];
           if (code === 'CUSTOM') {
@@ -6341,7 +6606,6 @@
           syncAirportDisplay(prefix);
         };
 
-        // 返回預設機場代號下拉選單
         const resetCustomAirportCode = (prefix) => {
           modalFlight.form[prefix + 'IsCustomCode'] = false;
           modalFlight.form[prefix + 'Code'] = '';
@@ -6349,7 +6613,6 @@
           syncAirportDisplay(prefix);
         };
 
-        // 選擇航廈下拉選單
         const onTerminalSelect = (prefix) => {
           const term = modalFlight.form[prefix + 'Terminal'];
           if (term === 'CUSTOM') {
@@ -6359,14 +6622,12 @@
           syncAirportDisplay(prefix);
         };
 
-        // 返回預設航廈下拉選單
         const resetCustomTerminal = (prefix) => {
           modalFlight.form[prefix + 'IsCustomTerminal'] = false;
           modalFlight.form[prefix + 'Terminal'] = '';
           syncAirportDisplay(prefix);
         };
 
-        // 計算兩組 HH:mm 時間差（支援跨日過夜自動加 24 小時）
         const computeDurationText = (arrTime, depTime, forceOvernight = false) => {
           if (!arrTime || !depTime || !arrTime.includes(':') || !depTime.includes(':')) return '';
           const [arrH, arrM] = arrTime.split(':').map(Number);
@@ -6387,7 +6648,6 @@
           return `${mins} 分鐘`;
         };
 
-        // 自動重新計算去程與回程的轉機停留時間
         const recalcLayoverDurations = () => {
           if (modalFlight.form.outboundHasTransfer) {
             const outDur = computeDurationText(
@@ -6407,7 +6667,6 @@
           }
         };
 
-        // 一鍵清空航班所有欄位方便重新填寫
         const clearFlightForm = () => {
           modalFlight.form = {
             airlineName: '',
@@ -6716,12 +6975,78 @@
 
         const snackFilterType = ref('ALL');
 
-        // Toast 輕量提示
+        // Toast 輕量通知
         const toast = reactive({ show: false, message: '' });
         const showToast = (msg) => {
           toast.message = msg;
           toast.show = true;
           setTimeout(() => { toast.show = false; }, 2200);
+        };
+
+        // 智慧地圖引擎切換 (auto / amap / google)
+        const mapProvider = ref('auto');
+        const mainlandCities = new Set(['重慶', '成都', '上海', '北京', '廣州', '深圳', '廈門', '杭州', '麗江', '大理', '昆明', '西安', '長沙', '武漢', '南京', '蘇州', '三亞', '哈爾濱']);
+        const useAmap = computed(() => {
+          if (mapProvider.value === 'amap') return true;
+          if (mapProvider.value === 'google') return false;
+          const cityName = (currentCity.value && currentCity.value.name) || '';
+          return mainlandCities.has(cityName) || (currentCurrency.value && currentCurrency.value.code === 'CNY');
+        });
+        const activeMapLabel = computed(() => useAmap.value ? '高德地圖' : 'Google 地圖');
+        const setMapProvider = (mode) => {
+          mapProvider.value = mode;
+          saveAllToOfflineStorage();
+          showToast(`導航已切換為：${mode === 'auto' ? '智慧自動 (' + activeMapLabel.value + ')' : (mode === 'amap' ? '高德地圖' : 'Google 地圖')}`);
+        };
+        const getMapNavUrl = (name, address) => {
+          const cleanName = String(name || '').trim() || String(address || '').trim();
+          const encoded = encodeURIComponent(cleanName);
+          if (useAmap.value) {
+            return `https://uri.amap.com/search?keyword=${encoded}&src=travelnotebook&callnative=1`;
+          }
+          return `https://www.google.com/maps/search/?api=1&query=${encoded}`;
+        };
+
+        // 直接喚起手機端高德地圖 App 或 Google Maps App (若未安裝 App 則自動退回網頁版)
+        const openMapApp = (event, name, address) => {
+          const cleanName = String(name || '').trim() || String(address || '').trim();
+          if (!cleanName) return;
+          const encoded = encodeURIComponent(cleanName);
+          const ua = navigator.userAgent || '';
+          const isMobile = /iPhone|iPad|iPod|Android/i.test(ua);
+          if (!isMobile) return; // 電腦版維持一般新分頁開啟網頁版地圖
+
+          event.preventDefault();
+          const isIOS = /iPhone|iPad|iPod/i.test(ua);
+          const webFallbackUrl = getMapNavUrl(cleanName, address);
+
+          let appSchemeUrl = '';
+          if (useAmap.value) {
+            // 高德地圖原生 App URI Scheme (iOS: iosamap://, Android: androidamap://)
+            appSchemeUrl = isIOS
+              ? `iosamap://poi?sourceApplication=travelnotebook&name=${encoded}`
+              : `androidamap://poi?sourceApplication=travelnotebook&keywords=${encoded}`;
+          } else {
+            // Google Maps 原生 App URI Scheme (iOS: comgooglemaps://, Android: geo:0,0?q=)
+            appSchemeUrl = isIOS
+              ? `comgooglemaps://?q=${encoded}`
+              : `geo:0,0?q=${encoded}`;
+          }
+
+          let appOpened = false;
+          const onVisibilityChange = () => {
+            if (document.hidden) appOpened = true;
+          };
+          document.addEventListener('visibilitychange', onVisibilityChange, { once: true });
+
+          window.location.href = appSchemeUrl;
+
+          setTimeout(() => {
+            document.removeEventListener('visibilitychange', onVisibilityChange);
+            if (!appOpened && !document.hidden) {
+              window.open(webFallbackUrl, '_blank');
+            }
+          }, 1200);
         };
 
         // 複製文字
@@ -6738,43 +7063,6 @@
             showToast('複製失敗，請手動複製');
           }
           document.body.removeChild(temp);
-        };
-
-        // 產生智慧地圖導航連結 (支援 Google 地圖 / 高德地圖 / 智慧自動判斷)
-        const mapProvider = ref('auto'); // 'auto' | 'amap' | 'google'
-        const mainlandCityKeywords = ['重慶', '重庆', '成都', '上海', '北京', '廣州', '广州', '深圳', '杭州', '廈門', '厦门', '蘇州', '苏州', '南京', '西安', '長沙', '长沙', '武漢', '武汉', '麗江', '丽江', '大理', '昆明', '桂林', '張家界', '张家界', '青島', '青岛', '哈爾濱', '哈尔滨'];
-
-        const resolvedMapEngine = computed(() => {
-          if (mapProvider.value === 'amap' || mapProvider.value === 'google') {
-            return mapProvider.value;
-          }
-          const cityName = (currentCity.value && currentCity.value.name) ? currentCity.value.name : '';
-          const currCode = (currentCurrency.value && currentCurrency.value.code) ? currentCurrency.value.code : '';
-          if (currCode === 'CNY' || mainlandCityKeywords.some(k => cityName.includes(k))) {
-            return 'amap';
-          }
-          return 'google';
-        });
-
-        const activeMapLabel = computed(() => {
-          return resolvedMapEngine.value === 'amap' ? '高德地圖 (Amap)' : 'Google 地圖';
-        });
-
-        const setMapProvider = (mode) => {
-          mapProvider.value = mode;
-          saveAllToOfflineStorage();
-          showToast(`已切換導航地圖為：${activeMapLabel.value}`);
-        };
-
-        const getMapNavUrl = (name = '', address = '') => {
-          const cleanName = String(name || '').trim();
-          const cleanAddr = String(address || '').trim();
-          const finalQuery = cleanName || cleanAddr;
-
-          if (resolvedMapEngine.value === 'amap') {
-            return `https://uri.amap.com/search?keyword=${encodeURIComponent(finalQuery)}&callnative=1`;
-          }
-          return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(finalQuery)}`;
         };
 
         // 一鍵產生專屬行程分享連結
@@ -6815,11 +7103,11 @@
               days: cleanDays,
               budget: budgetItems.value,
               expenses: expenseItems.value.map(exp => ({ ...exp, receiptPhoto: '' })),
-              stayList: stayList.value,
+              stayList: stayList.value.map(s => ({ ...s, image: '', images: [] })),
               flight: flightInfo.value,
               insuranceList: insuranceList.value,
               roamingList: roamingList.value,
-              food: foodList.value,
+              food: foodList.value.map(fd => ({ ...fd, image: '', images: [] })),
               snacks: snacksList.value,
               backup: backupSpots.value
             });
@@ -6847,7 +7135,7 @@
           const safeDays = stripPhotos
             ? daysList.value.map(d => ({
                 ...d,
-                events: (d.events || []).map(ev => ({ ...ev, image: '' }))
+                events: (d.events || []).map(ev => ({ ...ev, image: '', images: [] }))
               }))
             : JSON.parse(JSON.stringify(daysList.value));
 
@@ -6856,8 +7144,12 @@
             : JSON.parse(JSON.stringify(expenseItems.value));
 
           const safeFood = stripPhotos
-            ? foodList.value.map(fd => ({ ...fd, image: '' }))
+            ? foodList.value.map(fd => ({ ...fd, image: '', images: [] }))
             : JSON.parse(JSON.stringify(foodList.value));
+
+          const safeStay = stripPhotos
+            ? stayList.value.map(st => ({ ...st, image: '', images: [] }))
+            : JSON.parse(JSON.stringify(stayList.value));
 
           return {
             tripMeta: {
@@ -6870,12 +7162,12 @@
             budgetItems: JSON.parse(JSON.stringify(budgetItems.value)),
             expenseItems: safeExpenses,
             currentCity: { ...currentCity.value },
-            weather: { ...weather },
             mapProvider: mapProvider.value,
+            weather: { ...weather },
             currentCurrency: { ...currentCurrency.value },
             availableCurrencies: JSON.parse(JSON.stringify(availableCurrencies.value)),
             exchangeRate: exchangeRate.value,
-            stayList: JSON.parse(JSON.stringify(stayList.value)),
+            stayList: safeStay,
             flightInfo: JSON.parse(JSON.stringify(flightInfo.value)),
             insuranceList: JSON.parse(JSON.stringify(insuranceList.value)),
             roamingList: JSON.parse(JSON.stringify(roamingList.value)),
@@ -7344,6 +7636,7 @@
           category: '特色美食',
           priceCny: null,
           image: '',
+          images: [],
           linkUrl: '',
           note: ''
         });
@@ -7366,6 +7659,9 @@
 
         const openEditFoodModal = (food) => {
           modalFood.isEdit = true;
+          const existingImgs = Array.isArray(food.images) && food.images.length > 0
+            ? [...food.images]
+            : (food.image ? [food.image] : []);
           modalFood.forms = [{
             _key: food.id,
             _expanded: true,
@@ -7375,7 +7671,8 @@
             recommendationsStr: (food.recommendations || []).join('、'),
             category: food.category,
             priceCny: food.priceCny,
-            image: food.image || '',
+            image: existingImgs[0] || '',
+            images: existingImgs,
             linkUrl: food.linkUrl || '',
             note: food.note || ''
           }];
@@ -7383,15 +7680,19 @@
         };
 
         const onFoodPhotoUpload = async (event, idx = 0) => {
-          const file = event.target.files && event.target.files[0];
-          if (!file) return;
+          const files = event.target.files ? Array.from(event.target.files) : [];
+          if (files.length === 0) return;
           try {
-            showToast('正在壓縮照片中...');
-            const compressed = await compressImage(file, 600, 0.65);
-            if (modalFood.forms[idx]) {
-              modalFood.forms[idx].image = compressed;
+            showToast(`正在壓縮 ${files.length} 張餐廳照片...`);
+            const form = modalFood.forms[idx];
+            if (!form) return;
+            if (!Array.isArray(form.images)) form.images = form.image ? [form.image] : [];
+            for (const file of files) {
+              const compressed = await compressImage(file, 960, 0.78);
+              form.images.push(compressed);
             }
-            showToast('餐廳照片已就緒');
+            form.image = form.images[0] || '';
+            showToast(`已載入共 ${form.images.length} 張餐廳照片`);
           } catch (e) {
             showToast('照片處理失敗');
           }
@@ -7410,15 +7711,17 @@
             const recs = f.recommendationsStr 
               ? f.recommendationsStr.split(/[,，、]/).map(r => r.trim()).filter(Boolean)
               : [];
+            const imgs = Array.isArray(f.images) ? [...f.images] : (f.image ? [f.image] : []);
             const idx = foodList.value.findIndex(item => item.id === f.id);
             if (idx !== -1) {
-              foodList.value[idx] = { ...f, recommendations: recs };
+              foodList.value[idx] = { ...f, images: imgs, image: imgs[0] || '', recommendations: recs };
             }
           } else {
             const newItems = validForms.map((f, i) => {
               const recs = f.recommendationsStr 
                 ? f.recommendationsStr.split(/[,，、]/).map(r => r.trim()).filter(Boolean)
                 : [];
+              const imgs = Array.isArray(f.images) ? [...f.images] : (f.image ? [f.image] : []);
               return {
                 id: 'f-' + Date.now() + '-' + i,
                 name: f.name.trim(),
@@ -7426,7 +7729,8 @@
                 recommendations: recs,
                 category: f.category || '特色美食',
                 priceCny: f.priceCny || null,
-                image: f.image || '',
+                image: imgs[0] || '',
+                images: imgs,
                 linkUrl: f.linkUrl || '',
                 note: f.note || '',
                 isChecked: false
@@ -7621,12 +7925,17 @@
             stay.notes || ''
           ].filter(Boolean).join('\n');
 
+          const imgs = Array.isArray(stay.images) && stay.images.length > 0
+            ? [...stay.images]
+            : (stay.image ? [stay.image] : []);
+
           const stayObj = {
             name: `入住｜${stay.hotelName}`,
             address: stay.address || '',
             duration: '30分鐘 (辦理入住/寄放行李)',
             notes: noteLines,
-            image: ''
+            image: imgs[0] || '',
+            images: imgs
           };
           openAddToItineraryModal(stayObj, 'stay');
         };
@@ -7655,7 +7964,10 @@
           let eventAddress = item.address || '';
           let eventCat = modalAddToItinerary.itemType === 'food' ? (item.category || '美食') : (modalAddToItinerary.itemType === 'flight' ? '交通' : (modalAddToItinerary.itemType === 'stay' ? '住宿' : (item.tag || '景點')));
           let eventCost = modalAddToItinerary.itemType === 'food' ? item.priceCny : null;
-          let eventImage = item.image || '';
+          const eventImages = Array.isArray(item.images) && item.images.length > 0
+            ? [...item.images]
+            : (item.image ? [item.image] : []);
+          let eventImage = eventImages[0] || '';
           let eventNotes = '';
 
           if (modalAddToItinerary.itemType === 'food') {
@@ -7674,6 +7986,7 @@
             duration: modalAddToItinerary.duration || '1小時',
             costCny: eventCost,
             image: eventImage,
+            images: eventImages,
             alertTitle: '',
             alertText: '',
             alertType: 'warning',
@@ -8285,6 +8598,21 @@
 
           const nl2br = (str) => esc(str).replace(/\n/g, '<br>');
 
+          const renderLargePdfPhotos = (itemObj) => {
+            const list = (Array.isArray(itemObj.images) && itemObj.images.length > 0)
+              ? itemObj.images
+              : (itemObj.image ? [itemObj.image] : []);
+            if (list.length === 0) return '';
+            if (list.length === 1) {
+              return `<div style="margin-top:8px;"><img src="${list[0]}" style="width:100%; max-height:320px; object-fit:contain; border-radius:10px; border:1px solid #E8E5DF; background:#FAF9F6;"></div>`;
+            }
+            return `
+              <div style="margin-top:8px; display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                ${list.map(src => `<img src="${src}" style="width:100%; max-height:240px; object-fit:cover; border-radius:10px; border:1px solid #E8E5DF;">`).join('')}
+              </div>
+            `;
+          };
+
           const f = flightInfo.value;
           const staysHtml = stayList.value.length > 0
             ? stayList.value.map((s, idx) => `
@@ -8298,6 +8626,7 @@
                 ${s.roomType ? `<div style="font-size:11px; color:#555; margin-bottom:2px;">房型：${esc(s.roomType)}</div>` : ''}
                 ${s.accessCode ? `<div style="font-size:11px; color:#9F1239; background:#FFF1F2; border:1px solid #FDA4AF; padding:4px 8px; border-radius:6px; margin-top:4px; font-weight:700;">門禁/密碼：${nl2br(s.accessCode)}</div>` : ''}
                 ${s.notes ? `<div style="font-size:11px; color:#666; margin-top:4px;">備註：${nl2br(s.notes)}</div>` : ''}
+                ${renderLargePdfPhotos(s)}
               </div>
             `).join('')
             : '<div style="font-size:11px; color:#8A8884;">（尚未填寫住宿資訊）</div>';
@@ -8317,7 +8646,7 @@
                 ${ev.duration ? `<div style="font-size:10.5px; color:#5B7065; margin-top:2px;">⏱ 建議停留：${esc(ev.duration)}</div>` : ''}
                 ${(ev.alertTitle || ev.alertText) ? `<div style="font-size:10.5px; color:#92400E; background:#FFFBEB; border:1px solid #FCD34D; padding:4px 8px; border-radius:6px; margin-top:4px;"><strong>🔔 ${esc(ev.alertTitle || '提醒')}：</strong>${nl2br(ev.alertText)}</div>` : ''}
                 ${ev.notes ? `<div style="font-size:11px; color:#444; margin-top:4px; line-height:1.45;">${nl2br(ev.notes)}</div>` : ''}
-                ${ev.image ? `<div style="margin-top:6px;"><img src="${ev.image}" style="max-height:130px; border-radius:8px; border:1px solid #E8E5DF;"></div>` : ''}
+                ${renderLargePdfPhotos(ev)}
               </div>
             `).join('');
 
@@ -8342,6 +8671,7 @@
                 ${fd.recommendations && fd.recommendations.length ? `<div style="color:#BC473B; margin-top:2px;">★ 推薦：${esc(fd.recommendations.join('、'))}</div>` : ''}
                 ${fd.address ? `<div style="color:#555; margin-top:2px;">地址：${esc(fd.address)}</div>` : ''}
                 ${fd.note ? `<div style="color:#666; margin-top:2px;">${nl2br(fd.note)}</div>` : ''}
+                ${renderLargePdfPhotos(fd)}
               </div>
             `).join('')
             : '<div style="font-size:11px; color:#8A8884;">（無推薦餐廳紀錄）</div>';
@@ -8527,12 +8857,18 @@
           deleteExpense,
           lightbox,
           openLightbox,
+          prevLightboxPhoto,
+          nextLightboxPhoto,
+          onLightboxTouchStart,
+          onLightboxTouchEnd,
           stayList,
           modalStay,
           openAddStayModal,
           addStayFormRow,
           removeStayFormRow,
           openEditStayModal,
+          onStayPhotoUpload,
+          removeFormPhoto,
           submitSaveStay,
           deleteStay,
           flightInfo,
@@ -8621,6 +8957,7 @@
           activeMapLabel,
           setMapProvider,
           getMapNavUrl,
+          openMapApp,
           generateShareUrl,
           exportToPdf,
           modalAiParse,
