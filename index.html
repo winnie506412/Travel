@@ -183,7 +183,7 @@
           title="點擊切換城市與即時天氣"
         >
           <i class="fa-solid fa-cloud-sun text-[10px]"></i>
-          <span>{{ currentCity.name }} {{ weather.temp }}°</span>
+          <span>{{ currentCity?.name || '重慶' }} {{ weather.temp }}°</span>
         </button>
 
         <!-- 匯率鈕 -->
@@ -193,7 +193,7 @@
           class="bg-cq-goldLight text-cq-gold px-2 py-1 rounded-full text-[11px] font-mono flex items-center space-x-1 border border-cq-gold/25 active:scale-95 transition whitespace-nowrap flex-shrink-0"
           title="點擊切換幣別與更新匯率"
         >
-          <span class="text-[10px] font-bold">{{ currentCurrency.symbol }}</span>
+          <span class="text-[10px] font-bold">{{ currentCurrency?.symbol || '¥' }}</span>
           <span>1:{{ exchangeRate.toFixed(2) }}</span>
         </button>
 
@@ -317,7 +317,7 @@
         
         <div class="flex items-center space-x-1.5 text-xs font-mono text-cq-moss">
           <i class="fa-solid fa-location-dot text-[10px] text-cq-cinnabar"></i>
-          <span>{{ weather.condition }} {{ currentCity.name }} {{ weather.temp }}°C</span>
+          <span>{{ weather.condition }} {{ currentCity?.name || '重慶' }} {{ weather.temp }}°C</span>
         </div>
       </div>
 
@@ -1731,10 +1731,11 @@
               <div class="flex items-center space-x-1.5 flex-shrink-0">
                 <a
                   v-if="food.groupBuyUrl"
-                  :href="food.groupBuyUrl"
+                  :href="formatSmartLinkHref(food.groupBuyUrl)"
+                  @click="openSmartExternalApp($event, food.groupBuyUrl, food.name)"
                   target="_blank"
                   class="px-2.5 py-1 rounded-xl bg-cq-cinnabarLight text-cq-cinnabar border border-cq-cinnabar/30 hover:bg-cq-cinnabar hover:text-white transition text-[11px] font-serif-cq font-bold shadow-xs active:scale-95 inline-flex items-center space-x-1 whitespace-nowrap"
-                  title="開啟團購優惠連結"
+                  title="開啟團購 App 或微信小程序"
                 >
                   <i class="fa-solid fa-ticket text-[10px]"></i>
                   <span>團購</span>
@@ -1742,10 +1743,11 @@
                 
                 <a 
                   v-if="food.linkUrl"
-                  :href="food.linkUrl" 
+                  :href="formatSmartLinkHref(food.linkUrl)" 
+                  @click="openSmartExternalApp($event, food.linkUrl, food.name)"
                   target="_blank" 
                   class="px-2.5 py-1 rounded-xl bg-cq-goldLight text-cq-gold border border-cq-gold/30 hover:bg-cq-gold hover:text-white transition text-[11px] font-serif-cq font-bold shadow-xs active:scale-95 inline-flex items-center space-x-1 whitespace-nowrap"
-                  title="開啟相關連結"
+                  title="開啟相關連結或 App"
                 >
                   <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
                   <span>連結</span>
@@ -1916,20 +1918,22 @@
                 <div class="flex items-center space-x-1.5">
                   <a
                     v-if="item.groupBuyUrl"
-                    :href="item.groupBuyUrl"
+                    :href="formatSmartLinkHref(item.groupBuyUrl)"
+                    @click="openSmartExternalApp($event, item.groupBuyUrl, item.name)"
                     target="_blank"
                     class="px-2 py-1 rounded-lg bg-cq-cinnabarLight text-cq-cinnabar border border-cq-cinnabar/30 hover:bg-cq-cinnabar hover:text-white transition text-[11px] font-serif-cq font-bold inline-flex items-center space-x-1 whitespace-nowrap"
-                    title="開啟團購優惠連結"
+                    title="開啟團購 App 或微信小程序"
                   >
                     <i class="fa-solid fa-ticket text-[9px]"></i>
                     <span>團購</span>
                   </a>
                   <a 
                     v-if="item.linkUrl"
-                    :href="item.linkUrl" 
+                    :href="formatSmartLinkHref(item.linkUrl)" 
+                    @click="openSmartExternalApp($event, item.linkUrl, item.name)"
                     target="_blank" 
                     class="px-2 py-1 rounded-lg bg-cq-goldLight text-cq-gold border border-cq-gold/30 hover:bg-cq-gold hover:text-white transition text-[11px] font-medium inline-flex items-center space-x-1 whitespace-nowrap"
-                    title="開啟相關連結"
+                    title="開啟相關連結或 App"
                   >
                     <i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i>
                     <span>連結</span>
@@ -1978,8 +1982,8 @@
             class="bg-white rounded-2xl p-3.5 border border-cq-border shadow-sm flex flex-col justify-between"
           >
             <div>
-              <div class="flex items-start justify-between">
-                <div class="min-w-0 flex-1 pr-2">
+              <div class="flex items-start justify-between gap-2">
+                <div class="min-w-0 flex-1">
                   <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-cq-wash text-cq-muted border border-cq-border font-medium">
                     {{ spot.tag }}
                   </span>
@@ -2705,7 +2709,7 @@
             :key="c.name" 
             @click="selectCity(c)" 
             class="px-2.5 py-1 rounded-xl text-xs font-medium border transition"
-            :class="currentCity.name === c.name ? 'bg-cq-moss text-white border-cq-moss' : 'bg-cq-wash border-cq-border text-cq-charcoal hover:border-cq-muted'"
+            :class="currentCity?.name === c.name ? 'bg-cq-moss text-white border-cq-moss' : 'bg-cq-wash border-cq-border text-cq-charcoal hover:border-cq-muted'"
           >
             {{ c.name }}
           </button>
@@ -2732,7 +2736,7 @@
 
       <div class="p-3 bg-cq-wash rounded-xl border border-cq-border flex items-center justify-between text-xs font-mono">
         <div>
-          <span class="text-cq-charcoal font-bold">{{ currentCity.name }} 當前天氣</span>
+          <span class="text-cq-charcoal font-bold">{{ currentCity?.name || '重慶' }} 當前天氣</span>
           <span class="block text-[11px] text-cq-muted">{{ weather.condition }}</span>
         </div>
         <div class="text-right">
@@ -2743,9 +2747,9 @@
       <!-- 導航地圖引擎偏好切換 (Google Maps / 高德地圖) -->
       <div class="p-3 bg-cq-mossLight/50 rounded-2xl border border-cq-moss/30 space-y-2 text-xs">
         <div class="flex items-center justify-between">
-          <span class="font-bold text-cq-charcoal flex items-center space-x-1.5">
-            <i class="fa-solid fa-diamond-turn-right text-cq-moss"></i>
-            <span>全站「導航」按鈕預設地圖</span>
+          <span class="font-bold text-cq-charcoal flex items-center space-x-1">
+            <i class="fa-solid fa-diamond-turn-right text-cq-moss text-[11px]"></i>
+            <span>導航地圖引擎偏好</span>
           </span>
           <span class="text-[10px] font-mono text-cq-moss font-bold">目前：{{ activeMapLabel }}</span>
         </div>
@@ -7135,7 +7139,7 @@
               days: cleanDays,
               budget: budgetItems.value,
               expenses: expenseItems.value.map(exp => ({ ...exp, receiptPhoto: '' })),
-              stayList: stayList.value.map(s => ({ ...s, image: '', images: [] })),
+              stayList: stayList.value.map(st => ({ ...st, image: '', images: [] })),
               flight: flightInfo.value,
               insuranceList: insuranceList.value,
               roamingList: roamingList.value,
@@ -7159,6 +7163,58 @@
           } catch (err) {
             console.error('行程分享產生錯誤:', err);
             showToast('產生分享連結失敗，請稍候再試');
+          }
+        };
+
+        // 智慧外部 App 與微信小程序跳轉引擎
+        const formatSmartLinkHref = (rawUrl) => {
+          const val = String(rawUrl || '').trim();
+          if (!val) return '#';
+          if (val.startsWith('#小程序://') || val.startsWith('weixin://')) {
+            return 'weixin://';
+          }
+          if (/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(val)) {
+            return val;
+          }
+          // 若包含網域特徵自動補上 https://
+          if (/^[\w-]+(\.[\w-]+)+/.test(val)) {
+            return 'https://' + val;
+          }
+          return 'weixin://';
+        };
+
+        const openSmartExternalApp = (event, rawUrl, fallbackName = '') => {
+          const val = String(rawUrl || '').trim();
+          if (!val) return;
+          const ua = navigator.userAgent || '';
+          const isMobile = /iPhone|iPad|iPod|Android/i.test(ua);
+
+          // 1. 微信小程序口令 (#小程序://...) 或純小程序名稱 -> 自動複製口令並喚起微信 App
+          if (val.startsWith('#小程序://') || (!/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(val) && !/^[\w-]+(\.[\w-]+)+/.test(val))) {
+            event.preventDefault();
+            copyText(val);
+            showToast(`已複製「${val}」，正為您開啟微信貼上即可直達小程序！`);
+            if (isMobile) {
+              setTimeout(() => {
+                window.location.href = 'weixin://';
+              }, 350);
+            }
+            return;
+          }
+
+          // 2. 微信官方小程序短網址 (wxaurl.cn / mp.weixin.qq.com) -> 手機端優先喚起微信處理
+          if (isMobile && (val.includes('wxaurl.cn') || val.includes('weixin.qq.com'))) {
+            event.preventDefault();
+            const fullUrl = val.startsWith('http') ? val : 'https://' + val;
+            window.location.href = fullUrl;
+            return;
+          }
+
+          // 3. 美團 / 大眾點評 / 淘寶 / 小紅書等網頁連結 -> 交由系統 Universal Link / 新分頁自動喚起對應 App
+          if (isMobile && (val.includes('dianping.com') || val.includes('meituan.com') || val.includes('tb.cn') || val.includes('taobao.com') || val.includes('xiaohongshu.com') || val.includes('xhslink.com'))) {
+            event.preventDefault();
+            const fullUrl = val.startsWith('http') ? val : 'https://' + val;
+            window.location.href = fullUrl;
           }
         };
 
@@ -8994,6 +9050,8 @@
           submitAddToItinerary,
           switchTab,
           copyText,
+          formatSmartLinkHref,
+          openSmartExternalApp,
           mapProvider,
           activeMapLabel,
           setMapProvider,
