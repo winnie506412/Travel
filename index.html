@@ -1735,7 +1735,7 @@
                   @click="openSmartExternalApp($event, food.groupBuyUrl, food.name)"
                   target="_blank"
                   class="px-2.5 py-1 rounded-xl bg-cq-cinnabarLight text-cq-cinnabar border border-cq-cinnabar/30 hover:bg-cq-cinnabar hover:text-white transition text-[11px] font-serif-cq font-bold shadow-xs active:scale-95 inline-flex items-center space-x-1 whitespace-nowrap"
-                  title="開啟團購 App 或微信小程序"
+                  title="開啟團購 App 或網頁"
                 >
                   <i class="fa-solid fa-ticket text-[10px]"></i>
                   <span>團購</span>
@@ -1922,7 +1922,7 @@
                     @click="openSmartExternalApp($event, item.groupBuyUrl, item.name)"
                     target="_blank"
                     class="px-2 py-1 rounded-lg bg-cq-cinnabarLight text-cq-cinnabar border border-cq-cinnabar/30 hover:bg-cq-cinnabar hover:text-white transition text-[11px] font-serif-cq font-bold inline-flex items-center space-x-1 whitespace-nowrap"
-                    title="開啟團購 App 或微信小程序"
+                    title="開啟團購 App 或網頁"
                   >
                     <i class="fa-solid fa-ticket text-[9px]"></i>
                     <span>團購</span>
@@ -5266,38 +5266,43 @@
         const modalTripTitle = reactive({
           isOpen: false,
           form: {
-            title: '',
-            startDate: '',
-            endDate: ''
+            title: '旅遊手帳',
+            startDate: '2026-10-27',
+            endDate: '2026-11-03'
           }
         });
 
-        // 互動式區間月曆狀態與連選邏輯
+        // 互動式區間月曆狀態與連選邏輯 (先點出發日 -> 再點回程日)
         const rangeCalYear = ref(2026);
         const rangeCalMonth = ref(9); // 0-indexed (9 = 10月)
 
         const shiftRangeCalMonth = (delta) => {
           let m = rangeCalMonth.value + delta;
           let y = rangeCalYear.value;
-          if (m < 0) { m = 11; y -= 1; }
-          else if (m > 11) { m = 0; y += 1; }
-          rangeCalMonth.value = m;
+          if (m < 0) {
+            m = 11;
+            y -= 1;
+          } else if (m > 11) {
+            m = 0;
+            y += 1;
+          }
           rangeCalYear.value = y;
+          rangeCalMonth.value = m;
         };
 
         const rangeCalendarCells = computed(() => {
           const y = rangeCalYear.value;
           const m = rangeCalMonth.value;
-          const firstDay = new Date(y, m, 1).getDay();
+          const firstWeekday = new Date(y, m, 1).getDay();
           const daysInMonth = new Date(y, m + 1, 0).getDate();
           const cells = [];
-          for (let i = 0; i < firstDay; i++) {
-            cells.push({ day: null, dateStr: '' });
+          for (let i = 0; i < firstWeekday; i++) {
+            cells.push({ dateStr: '', day: '' });
           }
           for (let d = 1; d <= daysInMonth; d++) {
             const mm = String(m + 1).padStart(2, '0');
             const dd = String(d).padStart(2, '0');
-            cells.push({ day: d, dateStr: `${y}-${mm}-${dd}` });
+            cells.push({ dateStr: `${y}-${mm}-${dd}`, day: d });
           }
           return cells;
         });
@@ -5308,20 +5313,18 @@
         };
 
         const onRangeCalendarDayClick = (dateStr) => {
-          const s = modalTripTitle.form.startDate;
-          const e = modalTripTitle.form.endDate;
-          // 尚未選起始日，或已經選好完整區間 -> 重新設定為新的起始日，等待點擊結束日
-          if (!s || (s && e)) {
+          const curStart = modalTripTitle.form.startDate;
+          const curEnd = modalTripTitle.form.endDate;
+          if (!curStart || (curStart && curEnd)) {
             modalTripTitle.form.startDate = dateStr;
             modalTripTitle.form.endDate = '';
-            return;
-          }
-          // 已選起始日、尚未選結束日：若點選更早日期則自動交換起訖
-          if (dateStr < s) {
-            modalTripTitle.form.endDate = s;
-            modalTripTitle.form.startDate = dateStr;
           } else {
-            modalTripTitle.form.endDate = dateStr;
+            if (dateStr < curStart) {
+              modalTripTitle.form.endDate = curStart;
+              modalTripTitle.form.startDate = dateStr;
+            } else {
+              modalTripTitle.form.endDate = dateStr;
+            }
           }
         };
 
@@ -7166,21 +7169,14 @@
           }
         };
 
-        // 智慧外部 App 與微信小程序跳轉引擎
+        // 智慧外部 App 跳轉引擎 (支援美團、大眾點評、淘寶、小紅書、攜程等原生 App，未安裝自動退回網頁版)
         const formatSmartLinkHref = (rawUrl) => {
           const val = String(rawUrl || '').trim();
           if (!val) return '#';
-          if (val.startsWith('#小程序://') || val.startsWith('weixin://')) {
-            return 'weixin://';
-          }
           if (/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(val)) {
             return val;
           }
-          // 若包含網域特徵自動補上 https://
-          if (/^[\w-]+(\.[\w-]+)+/.test(val)) {
-            return 'https://' + val;
-          }
-          return 'weixin://';
+          return 'https://' + val;
         };
 
         const openSmartExternalApp = (event, rawUrl, fallbackName = '') => {
@@ -7188,33 +7184,46 @@
           if (!val) return;
           const ua = navigator.userAgent || '';
           const isMobile = /iPhone|iPad|iPod|Android/i.test(ua);
+          if (!isMobile) return;
 
-          // 1. 微信小程序口令 (#小程序://...) 或純小程序名稱 -> 自動複製口令並喚起微信 App
-          if (val.startsWith('#小程序://') || (!/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(val) && !/^[\w-]+(\.[\w-]+)+/.test(val))) {
+          if (/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(val) && !val.startsWith('http://') && !val.startsWith('https://')) {
             event.preventDefault();
-            copyText(val);
-            showToast(`已複製「${val}」，正為您開啟微信貼上即可直達小程序！`);
-            if (isMobile) {
-              setTimeout(() => {
-                window.location.href = 'weixin://';
-              }, 350);
-            }
+            window.location.href = val;
             return;
           }
 
-          // 2. 微信官方小程序短網址 (wxaurl.cn / mp.weixin.qq.com) -> 手機端優先喚起微信處理
-          if (isMobile && (val.includes('wxaurl.cn') || val.includes('weixin.qq.com'))) {
-            event.preventDefault();
-            const fullUrl = val.startsWith('http') ? val : 'https://' + val;
-            window.location.href = fullUrl;
-            return;
+          const fullUrl = val.startsWith('http') ? val : 'https://' + val;
+          const encodedUrl = encodeURIComponent(fullUrl);
+          let appScheme = '';
+
+          if (val.includes('dianping.com')) {
+            appScheme = `dianping://web?url=${encodedUrl}`;
+          } else if (val.includes('meituan.com')) {
+            appScheme = `imeituan://www.meituan.com/web?url=${encodedUrl}`;
+          } else if (val.includes('taobao.com') || val.includes('tmall.com') || val.includes('tb.cn')) {
+            appScheme = fullUrl.replace(/^https?:\/\//, 'taobao://');
+          } else if (val.includes('xiaohongshu.com') || val.includes('xhslink.com')) {
+            appScheme = `xhsdiscover://webview?url=${encodedUrl}`;
+          } else if (val.includes('ctrip.com')) {
+            appScheme = `ctrip://wireless/h5?url=${encodedUrl}`;
           }
 
-          // 3. 美團 / 大眾點評 / 淘寶 / 小紅書等網頁連結 -> 交由系統 Universal Link / 新分頁自動喚起對應 App
-          if (isMobile && (val.includes('dianping.com') || val.includes('meituan.com') || val.includes('tb.cn') || val.includes('taobao.com') || val.includes('xiaohongshu.com') || val.includes('xhslink.com'))) {
+          if (appScheme) {
             event.preventDefault();
-            const fullUrl = val.startsWith('http') ? val : 'https://' + val;
-            window.location.href = fullUrl;
+            let appOpened = false;
+            const onVisibilityChange = () => {
+              if (document.hidden) appOpened = true;
+            };
+            document.addEventListener('visibilitychange', onVisibilityChange, { once: true });
+
+            window.location.href = appScheme;
+
+            setTimeout(() => {
+              document.removeEventListener('visibilitychange', onVisibilityChange);
+              if (!appOpened && !document.hidden) {
+                window.open(fullUrl, '_blank');
+              }
+            }, 1200);
           }
         };
 
